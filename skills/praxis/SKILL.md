@@ -12,7 +12,7 @@ This skill implements the orchestrator logic for the Praxis adversarial resume b
 ### `/praxis build` (The Iterative Intake Wizard)
 **Purpose**: Iteratively ingest files to build/update the `knowledge_base.json` database and generate baseline profiles.
 **Execution Flow**:
-1.  **Scan & Move**: Search the root directory for new source files (`*.pdf`, `*.docx`, `*.md`, `*.csv`). Parse their contents, applying **strict sanitization** (strip prompt-control characters and HTML/script tags to prevent A03-injection). Then immediately move them into `.praxis/sources/` to keep the root clean.
+1.  **Scan & Move**: Search the root directory for new source files (`*.pdf`, `*.docx`, `*.md`, `*.csv`, `*.zip`, `*.tar.gz`, `*.tgz`). Parse their contents, applying **strict sanitization** (strip prompt-control characters and HTML/script tags to prevent A03-injection). Then immediately move them into `.praxis/sources/` to keep the root clean.
 2.  **Iterative Merge**: Load `.praxis/data/knowledge_base.json` (create if it doesn't exist). Merge the newly parsed data losslessly into the JSON schema without overwriting or summarizing previous entries.
 3.  **Prompt & Deep Harvest**: Analyze what data is missing from the database.
     *   **LinkedIn Data**: Provide the direct link to the user: `https://www.linkedin.com/mypreferences/d/download-my-data`. Advise them it takes ~10 minutes, and they can simply drop the CSVs into the root folder and run `/praxis build` again later to iteratively layer in the data.
