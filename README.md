@@ -30,12 +30,20 @@ Praxis solves this through a multi-agent architectural pipeline:
 Praxis installs directly into your local CLI environment (e.g., `opencode` or `strata`) as a skill.
 
 ### 1. The Intake Engine: `/praxis build`
-*   **What it does:** Scans your root directory for raw exports (PDFs, GitHub JSON metadata, LinkedIn CSVs).
-*   **How it works:** It losslessly parses this data, pushes it into the `knowledge_base.json`, and then moves the raw files to a secure `.praxis/sources/` directory. If it detects missing context, it will automatically interview you and perform web searches (e.g., researching niche team methodologies) to enrich your profile.
+*   **What it does:** Runs a deterministic Deep Harvest extraction script (`ingest.py`) across your root directory for raw exports (PDFs, TXTs), ignores system files, and syncs your public GitHub repositories (`github_sync.py`).
+*   **How it works:** It losslessly parses this data into `string[]` fact pools, pushes it into `.praxis/data/knowledge_base.json`, and then moves the raw files to a secure `.praxis/sources/` directory. It then automatically drafts ATS-optimized baseline profiles (`assets/Resume.md`, `assets/LinkedIn_Profile.md`) utilizing a "Discrete Chronological Strategy".
 
-### 2. The Forge: `/praxis customize <job-url>`
-*   **What it does:** Generates a highly tailored Markdown resume specifically designed to pass the ATS (Applicant Tracking System) for a target job.
-*   **How it works:** It runs a Skill Gap Analysis between the Job Description and your `knowledge_base.json`. If you are missing a required skill, it prompts you for an example of when you used it. Then, it triggers the `Pathos/Logos` adversarial loop to generate the final document.
+### 2. The Fact Logger: `/praxis history <fact>`
+*   **What it does:** Quickly appends a specific accomplishment, metric, or bullet point to an existing role without requiring a full CV re-upload.
+*   **How it works:** You run `/praxis history at DexCare, I managed a team of 50`. Praxis parses the company, locates it in `knowledge_base.json`, and appends the fact to that role's `bullets` array (the "fact pool"), automatically regenerating your baseline resumes.
+
+### 3. The Skill Enricher: `/praxis skill <skill_name> <description>`
+*   **What it does:** Replaces generic, scraped LinkedIn skills (e.g., "Kubernetes") with concrete contextual evidence of *how* you used that skill.
+*   **How it works:** You run `/praxis skill Kubernetes Architected multi-region clusters...`. Praxis pushes this rich context into the `RelationalSkillsDatabase` array for that skill, giving the Drafter agent highly specific material to work with.
+
+### 4. The Forge: `/praxis gen <job-url>`
+*   **What it does:** Generates a highly tailored PDF resume specifically designed to pass the ATS for a target job.
+*   **How it works:** It runs a Skill Gap Analysis between the Job Description and your `knowledge_base.json`. It triggers the `Pathos/Logos` adversarial loop to strategically select the 3-4 most relevant facts from your "fact pools" (rather than dumping your whole history). It then generates a targeted PDF (e.g., `assets/Company_User_Resume.pdf`) and cleans up the temporary files.
 
 ---
 

@@ -20,7 +20,8 @@ def main():
     )
 
     # Generate Resume.md
-    with open("Resume.md", "w") as f:
+    os.makedirs("assets", exist_ok=True)
+    with open("assets/Resume.md", "w") as f:
         f.write("# Kenton Smeltzer\n")
         f.write(
             "Phone: 786-933-0944 | Email: ksmeltzer@gmail.com | LinkedIn: http://www.linkedin.com/in/kentonsmeltzer | GitHub: https://github.com/ksmeltzer\n\n"
@@ -56,7 +57,7 @@ def main():
             f.write("\n")
 
     # Generate LinkedIn_Profile.md
-    with open("LinkedIn_Profile.md", "w") as f:
+    with open("assets/LinkedIn_Profile.md", "w") as f:
         f.write("# LinkedIn Profile Draft\n\n")
         f.write(
             "**Headline:** Principal Systems Engineer & AI Solutions Architect | RAG pipelines, Agentic Workflows, and High-Scale Enterprise Systems\n\n"
@@ -80,7 +81,7 @@ def main():
             f.write("\n")
 
     print(
-        "Drafting complete. Resume.md and LinkedIn_Profile.md generated successfully."
+        "Drafting complete. assets/Resume.md and assets/LinkedIn_Profile.md generated successfully."
     )
 
 

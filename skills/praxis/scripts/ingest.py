@@ -129,16 +129,7 @@ def main():
                 "description": "Designed and authored core architecture for secure, high-throughput healthcare data event streaming.",
             }
         ],
-        "Projects": [
-            {
-                "name": "OpenCode AI Orchestration",
-                "description": "Engineered a custom 7-persona AI Architecture Review Panel, AI-driven PR analyzer, and intelligent technical interview scribe.",
-            },
-            {
-                "name": "Patient Matching Algorithm",
-                "description": "Authored best-in-class algorithm at DexCare to reduce duplicate patient records while maintaining strict HIPAA compliance.",
-            },
-        ],
+        "Projects": [],
         "CachedAnswers": {},
     }
 
@@ -159,7 +150,7 @@ def main():
                     s.strip() for s in f.readlines() if s.strip() and " at " not in s
                 ]
                 kb["RelationalSkillsDatabase"] = {
-                    s: "Identified via input" for s in set(skills)
+                    s: ["Identified via input"] for s in set(skills)
                 }
             continue
         if txt_file == "kenton_cv.txt":
