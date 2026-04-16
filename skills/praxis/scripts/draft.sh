@@ -1,44 +1,32 @@
 #!/bin/bash
+set -e
 
-# Shell script version of draft.py
-
-# Ensure jq is available
-if ! command -v jq &> /dev/null
-then
-    echo "Error: jq is not installed. Please install jq to use this script."
-    exit 1
-fi
-
-# Path to the knowledge base JSON
 KB_FILE=".praxis/data/knowledge_base.json"
-
 if [ ! -f "$KB_FILE" ]; then
-    echo "Error: $KB_FILE not found. Run ingest pipeline first."
+    echo "Database not found."
     exit 1
 fi
 
-# Read skills
-skills=$(jq -r '.RelationalSkillsDatabase | keys_unsorted[]' "$KB_FILE")
-top_skills=$(echo "$skills" | head -n 30 | paste -sd ", " -) || top_skills="Python, Distributed Systems, Kubernetes, RAG, AI Agents, Node.js"
-
-# Create assets directory
 mkdir -p assets
 
+# Extract skills as comma separated
+SKILLS=$(jq -r '.RelationalSkillsDatabase | keys | join(", ")' "$KB_FILE")
+
 # Generate Resume.md
-cat <<EOF > assets/Resume.md
+cat <<MD > assets/Resume.md
 # Kenton Smeltzer
 Phone: 786-933-0944 | Email: ksmeltzer@gmail.com | LinkedIn: http://www.linkedin.com/in/kentonsmeltzer | GitHub: https://github.com/ksmeltzer
 
 ## Summary
-Principal Systems Engineer and AI Solutions Architect with over two decades of experience designing high-scale, secure, and distributed enterprise platforms. Proven track record of architecting systems that handle high-volume global reservations, complex federal investigations, and secure healthcare data. Expertise spans RAG pipelines, agentic workflows, distributed event-based data platforms, and adversarial modeling.
+Principal Systems Engineer and AI Solutions Architect.
 
 ## Skills
-**Core Competencies:** $top_skills
+**Core Competencies:** $SKILLS
 
-## Patents & Projects
-EOF
-jq -r '.Patents[] | "- **US Patent Pending (:):**   + "
-" | "name,found)
+## Experience
+MD
 
-# Log completion
-.NAME
+# Append experience
+jq -r '.CareerCatalog[] | "### \(.title)\n**\(.company)** | \(.dates)\n\n\(.bullets | map("- " + .) | join("\n"))\n"' "$KB_FILE" >> assets/Resume.md
+
+echo "✅ Draft generated at assets/Resume.md"
