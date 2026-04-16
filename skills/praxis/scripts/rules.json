@@ -1,0 +1,73 @@
+{
+  "date_replacements": {
+    "2015 - 21": "2015 - 2021",
+    "2010 - 15": "2010 - 2015",
+    "2006 - 10": "2006 - 2010",
+    "2003 - 06": "2003 - 2006",
+    "2001 - 03": "2001 - 2003",
+    "2000 - 01": "2000 - 2001",
+    "1998 - 00": "1998 - 2000",
+    "1995 - 98": "1995 - 1998",
+    "12/25 - Present": "12/2025 - Present"
+  },
+  "company_replacements": {
+    "Voya Financial": "Voya Financial (Contract via Lowbush Company)",
+    "AGIS Software": "AGIS Software (Contract via Lowbush Company)"
+  },
+  "date_overrides": {
+    "DexCare": {
+      "match": "Present",
+      "replace_with": "2021 - 07/2025"
+    }
+  },
+  "injected_roles": [
+    {
+      "company": "AGIS Software (Contract via Lowbush Company)",
+      "title": "AI & Systems Engineering Consultant",
+      "dates": "07/2025 - 12/2025",
+      "bullets": [
+        "Engineered real-time, event-based geospatial coordination systems for Military, Police, and Fire Operations.",
+        "Architected distributed event-based infrastructure utilizing MQTT, MQTT over WebSockets, and AMQP to synchronize web, mobile, and IoT devices.",
+        "Applied AI solutions to real-time field audio communications and geospatial logistics to enhance situational awareness and deployment efficiency."
+      ]
+    }
+  ],
+  "known_companies": [
+    {
+      "match": "DexCare",
+      "title": "Principle Software Engineer / Director of Special Projects"
+    },
+    {
+      "match": "Joint Interagency Task Force",
+      "title": "Principle Software Engineer / Government Projects Lead"
+    },
+    {
+      "match": "Lowbush Company",
+      "title": "Enterprise Architect / CTO"
+    },
+    {
+      "match": "Marriott Vacation Club",
+      "title": "Senior Director of Technology"
+    },
+    {
+      "match": "AccessUSA (Hotelbeds)",
+      "title": "CTO / Director of Engineering"
+    },
+    {
+      "match": "Orlando.com / Internet Vacations",
+      "title": "CTO / Principle Engineer"
+    },
+    {
+      "match": "Body International",
+      "title": "Lead Developer"
+    },
+    {
+      "match": "Modis Technologies",
+      "title": "Sr. Simulations Developer / Team Lead"
+    },
+    {
+      "match": "OCI",
+      "title": "Senior Developer"
+    }
+  ]
+}

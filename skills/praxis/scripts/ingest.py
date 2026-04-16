@@ -2,73 +2,170 @@ import os
 import re
 import json
 import glob
+import urllib.request
+import urllib.error
+
+RULES_FILE = os.path.join(os.path.dirname(__file__), "rules.json")
 
 
-def parse_cv(cv_text):
+def load_rules():
+    if os.path.exists(RULES_FILE):
+        with open(RULES_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+
+def normalize_whitespace(text):
+    return re.sub(r"\s+", "", text).lower()
+
+
+def verify_facts(roles, raw_text):
+    """
+    Deterministic Fact Verification (Anti-Hallucination Layer)
+    Ensures every extracted bullet point actually exists in the raw text.
+    """
+    normalized_raw = normalize_whitespace(raw_text)
+    verified_roles = []
+
+    dropped_facts = 0
+    for role in roles:
+        verified_bullets = []
+        for bullet in role.get("bullets", []):
+            # Check if bullet exists in the raw text
+            normalized_bullet = normalize_whitespace(bullet)
+            # LLMs sometimes summarize, but we demand an exact substring match
+            # To be slightly forgiving with formatting, we strip all whitespace before comparing
+            if normalized_bullet in normalized_raw:
+                verified_bullets.append(bullet)
+            else:
+                dropped_facts += 1
+                print(
+                    f"[Verification] Dropped hallucinated/modified fact: {bullet[:50]}..."
+                )
+
+        role["bullets"] = verified_bullets
+        verified_roles.append(role)
+
+    if dropped_facts > 0:
+        print(
+            f"[Verification] Dropped {dropped_facts} unverified facts to prevent hallucination."
+        )
+
+    return verified_roles
+
+
+def llm_extraction(cv_text, api_key):
+    """
+    Extracts roles using an LLM configured for strict JSON schema output.
+    """
+    print("[Extraction] Attempting LLM Extraction...")
+    url = "https://api.openai.com/v1/chat/completions"
+    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
+
+    schema = {
+        "type": "object",
+        "properties": {
+            "roles": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "company": {"type": "string"},
+                        "title": {"type": "string"},
+                        "dates": {"type": "string"},
+                        "bullets": {"type": "array", "items": {"type": "string"}},
+                    },
+                    "required": ["company", "title", "dates", "bullets"],
+                    "additionalProperties": False,
+                },
+            }
+        },
+        "required": ["roles"],
+        "additionalProperties": False,
+    }
+
+    prompt = (
+        "Extract all career roles from the following resume text. "
+        "Do NOT summarize, invent, or rewrite facts. Extract bullet points verbatim as they appear. "
+        f"Resume text:\n{cv_text}"
+    )
+
+    data = {
+        "model": "gpt-4o",
+        "messages": [
+            {
+                "role": "system",
+                "content": "You are a precise data extraction agent. Output valid JSON only according to the schema.",
+            },
+            {"role": "user", "content": prompt},
+        ],
+        "response_format": {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "career_extraction",
+                "schema": schema,
+                "strict": True,
+            },
+        },
+        "temperature": 0.0,
+    }
+
+    try:
+        req = urllib.request.Request(
+            url, data=json.dumps(data).encode("utf-8"), headers=headers
+        )
+        with urllib.request.urlopen(req) as response:
+            result = json.loads(response.read().decode("utf-8"))
+            parsed_json = json.loads(result["choices"][0]["message"]["content"])
+            return parsed_json.get("roles", [])
+    except Exception as e:
+        print(f"[Extraction] LLM extraction failed: {e}")
+        return None
+
+
+def fallback_extraction(cv_text, rules):
+    """
+    Deterministic fallback parser using known companies if LLM is unavailable.
+    """
+    print("[Extraction] Using deterministic fallback parser...")
     roles = []
     try:
         career_text = cv_text.split("Career History")[1].split("Education")[0]
     except IndexError:
         career_text = cv_text
 
-    companies = [
-        ("DexCare", "Principle Software Engineer / Director of Special Projects"),
-        (
-            "Joint Interagency Task Force",
-            "Principle Software Engineer / Government Projects Lead",
-        ),
-        ("Lowbush Company", "Enterprise Architect / CTO"),
-        ("Marriott Vacation Club", "Senior Director of Technology"),
-        ("AccessUSA (Hotelbeds)", "CTO / Director of Engineering"),
-        ("Orlando.com / Internet Vacations", "CTO / Principle Engineer"),
-        ("Body International", "Lead Developer"),
-        ("Modis Technologies", "Sr. Simulations Developer / Team Lead"),
-        ("OCI", "Senior Developer"),
-    ]
+    known_companies = rules.get("known_companies", [])
+    if not known_companies:
+        return roles
 
-    # Split by the known company names to guarantee 0 loss for this specific user's CV structure
-    blocks = re.split(
-        r"(DexCare:|Joint Interagency Task Force:|Lowbush Company:|Marriott Vacation Club:|AccessUSA \(Hotelbeds\):|Orlando\.com / Internet Vacations:|Body International:|Modis Technologies:|OCI:)",
-        career_text,
+    # Create regex from known companies
+    split_pattern = (
+        r"(" + "|".join([re.escape(c["match"]) + ":" for c in known_companies]) + r")"
     )
+    blocks = re.split(split_pattern, career_text)
 
     for i in range(1, len(blocks), 2):
         comp_header = blocks[i].replace(":", "").strip()
         content = blocks[i + 1]
 
-        match = next(c for c in companies if c[0] == comp_header)
-        company = match[0]
-        title = match[1]
+        try:
+            match = next(c for c in known_companies if c["match"] == comp_header)
+        except StopIteration:
+            continue
 
-        # Extract dates (the first thing after the header)
+        company = match["match"]
+        title = match.get("title", "")
+
+        # Extract dates
         date_match = re.search(
             r"(\d{4}\s*-\s*(?:\d{4}|Present|\d{2}))", content, re.IGNORECASE
         )
         dates = date_match.group(1) if date_match else "Unknown"
-        dates = re.sub(r"\s*-\s*", " - ", dates)
-        if dates == "2015 - 21":
-            dates = "2015 - 2021"
-        if dates == "2010 - 15":
-            dates = "2010 - 2015"
-        if dates == "2006 - 10":
-            dates = "2006 - 2010"
-        if dates == "2003 - 06":
-            dates = "2003 - 2006"
-        if dates == "2001 - 03":
-            dates = "2001 - 2003"
-        if dates == "2000 - 01":
-            dates = "2000 - 2001"
-        if dates == "1998 - 00":
-            dates = "1998 - 2000"
-        if dates == "1995 - 98":
-            dates = "1995 - 1998"
 
         bullets = []
-
-        # Split by Accomplishments
         parts = re.split(r"Accomplishments:", content, re.IGNORECASE)
 
-        # Extract role
+        # Extract role summary
         role_match = re.search(
             r"Role:(.*?)(?:\Z|Accomplishments:)", content, re.DOTALL | re.IGNORECASE
         )
@@ -90,6 +187,7 @@ def parse_cv(cv_text):
         roles.append(
             {"company": company, "title": title, "dates": dates, "bullets": bullets}
         )
+
     return roles
 
 
@@ -99,15 +197,55 @@ def parse_txt_roles(txt_content):
         return None
     company = lines[0]
     dates = lines[1]
-    dates = re.sub(r"\s*-\s*", " - ", dates)
     title = lines[2]
     bullets = [l.lstrip("-").strip() for l in lines[3:]]
     return {"company": company, "title": title, "dates": dates, "bullets": bullets}
 
 
+def normalize_roles(roles, rules):
+    """
+    Applies declarative normalizations from rules.json
+    """
+    date_reps = rules.get("date_replacements", {})
+    comp_reps = rules.get("company_replacements", {})
+    date_ovrs = rules.get("date_overrides", {})
+
+    for role in roles:
+        # Date replacements
+        d = re.sub(r"\s*-\s*", " - ", role.get("dates", ""))
+        for old_val, new_val in date_reps.items():
+            if d == old_val:
+                d = new_val
+        role["dates"] = d
+
+        # Company replacements
+        c = role.get("company", "")
+        for old_val, new_val in comp_reps.items():
+            if old_val in c:
+                role["company"] = new_val
+
+        # Date overrides based on company
+        comp = role.get("company", "")
+        for override_comp, override_rules in date_ovrs.items():
+            if override_comp in comp and override_rules["match"] in role["dates"]:
+                role["dates"] = override_rules["replace_with"]
+
+    # Inject roles if not present
+    for inj_role in rules.get("injected_roles", []):
+        has_role = any(inj_role["company"] in r["company"] for r in roles)
+        if not has_role:
+            roles.insert(
+                1, inj_role
+            )  # Typically inserting at index 1 based on chronological needs
+
+    return roles
+
+
 def main():
     print("Running Praxis Ingestion Pipeline...")
     os.makedirs(".praxis/data", exist_ok=True)
+
+    rules = load_rules()
 
     kb = {
         "UserProfile": {
@@ -135,11 +273,27 @@ def main():
 
     # 1. Ingest PDF
     cv_roles = []
+    raw_cv_text = ""
     if os.path.exists("Kenton-Smeltzer- cv.pdf"):
         os.system('pdftotext "Kenton-Smeltzer- cv.pdf" kenton_cv.txt')
         if os.path.exists("kenton_cv.txt"):
             with open("kenton_cv.txt", "r") as f:
-                cv_roles = parse_cv(f.read())
+                raw_cv_text = f.read()
+
+    if raw_cv_text:
+        api_key = os.environ.get("OPENAI_API_KEY")
+        if api_key:
+            extracted = llm_extraction(raw_cv_text, api_key)
+            if extracted:
+                # Anti-hallucination layer
+                cv_roles = verify_facts(extracted, raw_cv_text)
+            else:
+                cv_roles = fallback_extraction(raw_cv_text, rules)
+        else:
+            print(
+                "[Extraction] No OPENAI_API_KEY found in environment. Skipping LLM extraction."
+            )
+            cv_roles = fallback_extraction(raw_cv_text, rules)
 
     # 2. Ingest TXT files
     custom_roles = []
@@ -165,36 +319,8 @@ def main():
 
     all_roles = custom_roles + cv_roles
 
-    # Timeline Validation & Standardization
-    for role in all_roles:
-        if role["dates"] == "12/25 - Present":
-            role["dates"] = "12/2025 - Present"
-
-        if "Voya Financial" in role["company"]:
-            role["company"] = "Voya Financial (Contract via Lowbush Company)"
-        elif "AGIS Software" in role["company"]:
-            role["company"] = "AGIS Software (Contract via Lowbush Company)"
-
-    # Fill AGIS Gap
-    has_agis = any("AGIS" in r["company"] for r in all_roles)
-    if not has_agis:
-        all_roles.insert(
-            1,
-            {
-                "company": "AGIS Software (Contract via Lowbush Company)",
-                "title": "AI & Systems Engineering Consultant",
-                "dates": "07/2025 - 12/2025",
-                "bullets": [
-                    "Engineered real-time, event-based geospatial coordination systems for Military, Police, and Fire Operations.",
-                    "Architected distributed event-based infrastructure utilizing MQTT, MQTT over WebSockets, and AMQP to synchronize web, mobile, and IoT devices.",
-                    "Applied AI solutions to real-time field audio communications and geospatial logistics to enhance situational awareness and deployment efficiency.",
-                ],
-            },
-        )
-
-    for role in all_roles:
-        if role["company"] == "DexCare" and "Present" in role["dates"]:
-            role["dates"] = "2021 - 07/2025"
+    # 3. Apply Externalized Normalization Rules
+    all_roles = normalize_roles(all_roles, rules)
 
     kb["CareerCatalog"] = all_roles
 
