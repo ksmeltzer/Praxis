@@ -1,6 +1,6 @@
 <div align="center">
   <h1>Praxis</h1>
-  <p><b>An Adversarial, Multi-Agent Career & Resume Forging Pipeline</b></p>
+  <p><b>An Adversarial, Multi-Agent Career & Resume Pipeline</b></p>
   <p><i>Defeating ATS bots, hallucination, and the blank-page problem through rigorous AI orchestration.</i></p>
 </div>
 
