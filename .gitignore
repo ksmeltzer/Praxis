@@ -34,3 +34,8 @@ Tailored_*.md
 .dolt/
 *.db
 .beads-credential-key
+
+# OpenCode & Beads Agent Files
+AGENTS.md
+CLAUDE.md
+.beads/
