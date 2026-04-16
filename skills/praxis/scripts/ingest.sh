@@ -8,7 +8,6 @@ TMP_DIR=$(mktemp -d)
 ZIP_FILE=$(ls *LinkedInDataExport*.zip* 2>/dev/null | head -n 1 || true)
 if [ -n "$ZIP_FILE" ]; then
   unzip -q -o "$ZIP_FILE" -d "$TMP_DIR" || true
-  # In case it's a zip inside a zip
   for inner in "$TMP_DIR"/*.zip; do
     if [ -f "$inner" ]; then
       unzip -q -o "$inner" -d "$TMP_DIR/extracted" || true
@@ -20,12 +19,14 @@ POSITIONS_CSV=$(find "$TMP_DIR" -name "Positions.csv" | head -n 1 || true)
 SKILLS_CSV=$(find "$TMP_DIR" -name "Skills.csv" | head -n 1 || true)
 PROFILE_CSV=$(find "$TMP_DIR" -name "Profile.csv" | head -n 1 || true)
 
+CV_TXT=$(find . -maxdepth 1 -name "kenton_cv.txt" | head -n 1 || true)
+
 LINKEDIN_ROLES="[]"
 LINKEDIN_SKILLS="{}"
 LINKEDIN_PROFILE='{"headline":"Unknown", "summary":"Unknown"}'
 
 if [ -n "$POSITIONS_CSV" ] && [ -f "$POSITIONS_CSV" ]; then
-  LINKEDIN_ROLES=$(node skills/praxis/scripts/parse_csv.js "$POSITIONS_CSV" "positions")
+  LINKEDIN_ROLES=$(node skills/praxis/scripts/ingest_all.js "$POSITIONS_CSV" "$CV_TXT" "skills/praxis/scripts/rules.json")
 fi
 if [ -n "$SKILLS_CSV" ] && [ -f "$SKILLS_CSV" ]; then
   LINKEDIN_SKILLS=$(node skills/praxis/scripts/parse_csv.js "$SKILLS_CSV" "skills")
@@ -41,7 +42,7 @@ jq --argjson roles "$LINKEDIN_ROLES" \
    '{
      "Profile": $profile,
      "CareerCatalog": (
-       $roles + .injected_roles
+       $roles
      ),
      "RelationalSkillsDatabase": (
        $skills * {
