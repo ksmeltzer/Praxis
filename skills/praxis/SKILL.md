@@ -1,6 +1,6 @@
 ---
 name: praxis
-description: "Adversarial, Multi-Agent Career Knowledge Base & Resume Pipeline. Usage: /praxis build, /praxis gen <url>, /praxis history <fact>, /praxis skill <name> <desc>, /praxis help"
+description: "Adversarial, Multi-Agent Career Knowledge Base & Resume Pipeline. Usage: /praxis, /praxis gen <url>, /praxis history <fact>, /praxis skill <name> <desc>, /praxis help"
 trigger: /praxis
 ---
 # Praxis Skill
@@ -14,7 +14,7 @@ This skill implements the orchestrator logic for the Praxis adversarial resume b
 
 ## Commands
 
-### `/praxis build` (The Iterative Intake Wizard)
+### `/praxis` (The Iterative Intake Wizard)
 **Purpose**: Iteratively ingest files to build/update the `knowledge_base.json` database and generate baseline profiles.
 **Execution Flow**:
 1.  **Ingest (Deep Harvest Protocol)**: Run the deterministic extraction script `bash skills/praxis/scripts/ingest.sh`. This script will search the root directory for all source files, explicitly ignoring system files (`AGENTS.md`, `CLAUDE.md`, `README.md`, `.beads/`), and extract EVERY SINGLE job role, company, date range, technology, and bullet point into `.praxis/data/knowledge_base.json` without data loss or hallucinations.

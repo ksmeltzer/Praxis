@@ -29,7 +29,7 @@ Praxis solves this through a multi-agent architectural pipeline:
 
 Praxis installs directly into your local CLI environment (e.g., `opencode` or `strata`) as a skill.
 
-### 1. The Intake Engine: `/praxis build`
+### 1. The Intake Engine: `/praxis`
 *   **What it does:** Runs a deterministic Deep Harvest extraction script (`ingest.py`) across your root directory for raw exports (PDFs, TXTs), ignores system files, and syncs your public GitHub repositories (`github_sync.py`).
 *   **How it works:** It losslessly parses this data into `string[]` fact pools, pushes it into `.praxis/data/knowledge_base.json`, and then moves the raw files to a secure `.praxis/sources/` directory. It then automatically drafts ATS-optimized baseline profiles (`assets/Resume.md`, `assets/LinkedIn_Profile.md`) utilizing a "Discrete Chronological Strategy".
 
