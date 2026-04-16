@@ -18,7 +18,7 @@ fi
 # Append fact to matching company's bullets array (case-insensitive match)
 tmp=$(mktemp)
 jq --arg company "$COMPANY" --arg fact "$FACT" '
-  .CareerCatalog |= map(
+  .work |= map(
     if (.company | ascii_downcase) == ($company | ascii_downcase) then
       .bullets += [$fact]
     else

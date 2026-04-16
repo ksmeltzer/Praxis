@@ -78,9 +78,17 @@ Contains 12 sections of research-backed rules that both `praxis-pathos` and `pra
 | `skills/praxis/scripts/history.sh` | Append career fact to `work` array |
 | `skills/praxis/scripts/skill.sh` | Enrich skill with evidence |
 | `skills/praxis/scripts/rules.json` | User overrides (date corrections, injected roles) |
+| `skills/praxis/scripts/gen_pdf.sh` | Markdown to PDF conversion with ATS-friendly styling |
 | `.praxis/data/knowledge_base.json` | Structured career database |
 | `.praxis/sources/raw_context.txt` | Concatenated raw input |
 | `assets/Resume.md` | Generated baseline resume |
+| **Platform-Agnostic Installation** | |
+| `agents/praxis/praxis-pathos.md` | Drafter persona (YAML frontmatter + system prompt) |
+| `agents/praxis/praxis-logos.md` | Auditor persona (YAML frontmatter + system prompt) |
+| `commands/praxis.md` | Slash command definition |
+| `model-mappings.json` | Provider-agnostic model routing for both personas |
+| `install.sh` / `install.ps1` | Cross-platform installer (copy or symlink mode) |
+| `configure_models.sh` / `configure_models.ps1` | Merges model mappings into opencode.json |
 
 ## 8. Post-Mortem of Previous Mistakes (DO NOT REPEAT)
 1. **Faked `github_sync.sh`:** Previous agent hardcoded a single project instead of calling the GitHub API. Fixed: now uses `gh repo list`.
@@ -91,6 +99,4 @@ Contains 12 sections of research-backed rules that both `praxis-pathos` and `pra
 6. **Ghost files:** Left stub ZIPs and config files cluttering root. Fixed: cleanup protocols in scripts.
 
 ## 9. Remaining Work
-- Verify the full `/praxis gen <url>` adversarial loop end-to-end (praxis-pathos, praxis-logos personas)
-- Consider adding `/praxis refine` as a standalone command (run refinement passes independently of full ingestion)
-- Expand `rules.json` schema for more complex user overrides
+- (No known remaining work items — all tasks completed)

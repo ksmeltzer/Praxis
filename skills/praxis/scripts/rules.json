@@ -69,5 +69,30 @@
       "match": "OCI",
       "title": "Senior Developer"
     }
-  ]
+  ],
+  "skill_overrides": {
+    "_comment": "Force-add or force-remove skills. Keys are skill names. Value 'remove' suppresses the skill entirely. Any other value replaces the evidence array.",
+    "_example_remove": "remove",
+    "_example_replace": ["Custom evidence string that replaces whatever was auto-extracted"]
+  },
+  "bullet_rewrites": {
+    "_comment": "Manual bullet overrides. Keys are the EXACT original bullet text (or a unique substring). Values are the replacement text. Applied during draft generation.",
+    "_example": "Original bullet text here -> Rewritten bullet text here"
+  },
+  "exclusions": {
+    "_comment": "Companies or roles to suppress entirely from generated resumes. Useful for short stints, irrelevant roles, or roles under NDA.",
+    "companies": [],
+    "roles": []
+  },
+  "section_order": {
+    "_comment": "Override the default section ordering in generated resumes. Default: summary, skills, distinctions, experience, education, certifications, projects. Only specify if you want a non-default order.",
+    "order": ["summary", "skills", "distinctions", "experience", "education", "certifications", "projects"]
+  },
+  "contact_info": {
+    "_comment": "Override contact details used in resume header. Falls back to knowledge_base.json basics if not set here.",
+    "phone": "786-933-0944",
+    "email": "ksmeltzer@gmail.com",
+    "linkedin": "http://www.linkedin.com/in/kentonsmeltzer",
+    "github": "https://github.com/ksmeltzer"
+  }
 }

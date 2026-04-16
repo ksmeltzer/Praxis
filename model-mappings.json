@@ -1,28 +1,40 @@
 {
-  "description": "Recommended model mappings for the Praxis 2-Agent Adversarial Loop.",
+  "description": "Platform-agnostic model mappings for the Praxis 2-Agent Adversarial Loop. Copy the relevant provider block into your tool's config (e.g., ~/.config/opencode/opencode.json). Pathos (drafter) benefits from creative, voice-adaptive models. Logos (auditor) benefits from rigorous, instruction-following models.",
   "providers": {
     "github_copilot": {
       "agent": {
         "praxis-pathos": { "model": "github-copilot/claude-sonnet-4.6" },
-        "praxis-logos": { "model": "github-copilot/gpt-4o" }
+        "praxis-logos": { "model": "github-copilot/claude-sonnet-4.6" }
+      }
+    },
+    "openai_direct": {
+      "agent": {
+        "praxis-pathos": { "model": "openai/gpt-4o" },
+        "praxis-logos": { "model": "openai/o1-preview" }
       }
     },
     "openai_anthropic_direct": {
       "agent": {
         "praxis-pathos": { "model": "anthropic/claude-3-5-sonnet-latest" },
-        "praxis-logos": { "model": "openai/o1-preview" }
+        "praxis-logos": { "model": "anthropic/claude-3-5-sonnet-latest" }
       }
     },
     "openrouter": {
       "agent": {
         "praxis-pathos": { "model": "openrouter/anthropic/claude-3.5-sonnet" },
-        "praxis-logos": { "model": "openrouter/openai/gpt-4o" }
+        "praxis-logos": { "model": "openrouter/anthropic/claude-3.5-sonnet" }
+      }
+    },
+    "aws_bedrock": {
+      "agent": {
+        "praxis-pathos": { "model": "bedrock/anthropic.claude-3-5-sonnet-20241022-v2:0" },
+        "praxis-logos": { "model": "bedrock/anthropic.claude-3-5-sonnet-20241022-v2:0" }
       }
     },
     "opencode_zen": {
       "agent": {
         "praxis-pathos": { "model": "claude-3-5-sonnet" },
-        "praxis-logos": { "model": "gpt-4o" }
+        "praxis-logos": { "model": "claude-3-5-sonnet" }
       }
     }
   }

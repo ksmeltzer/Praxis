@@ -17,7 +17,7 @@ fi
 
 tmp=$(mktemp)
 jq --arg skill "$SKILL" --arg desc "$DESC" '
-  .RelationalSkillsDatabase |= (
+  .skills |= (
     if has($skill) then
       if (.[$skill] | length == 1) and .[$skill][0] == "Identified via input" then
         .[$skill] = [$desc]
