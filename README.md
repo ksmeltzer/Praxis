@@ -1,6 +1,5 @@
 <div align="center">
   <img src="docs/assets/logo.png" alt="Praxis Logo" width="200" />
-  <h1>Praxis</h1>
   <p><b>An Adversarial, Multi-Agent Career Knowledge Base & Resume Pipeline</b></p>
   <p><i>Defeating ATS bots, hallucination, and the blank-page problem through rigorous AI orchestration.</i></p>
 </div>
