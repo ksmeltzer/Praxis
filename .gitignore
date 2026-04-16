@@ -29,3 +29,8 @@ __pycache__/
 # Generated Output
 *_Profile.md
 Tailored_*.md
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key

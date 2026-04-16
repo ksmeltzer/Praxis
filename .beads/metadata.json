@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "Praxis",
+  "project_id": "7affd861-e362-4c09-96e0-3f07947891ce"
+}
