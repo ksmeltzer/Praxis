@@ -148,9 +148,28 @@ Praxis uses a single command with three modes. The orchestrator dispatches based
 
     **CRITICAL**: The voice profile is law for all downstream generation. `praxis-pathos` MUST draft in this voice. `praxis-logos` MUST reject deviations.
 
-    **Pass 1 — Summary Audit**: Evaluate `basics.summary` against the entire career corpus. Does it reflect the strongest differentiators? Does it undersell key themes? Present current summary, analysis, and proposed revision.
+    **Pass 1 — Terminology Normalization**: Before any rewriting, the Orchestrator MUST normalize terminology across the entire knowledge base to eliminate variant references to the same concept. This prevents skills from appearing "orphaned" when they are actually evidenced under a different name.
 
-    **Pass 2 — Bullet Strengthening (Quantification Interview)**: Scan every bullet for passive voice, vague language, missing metrics, unspecific scale, first-person pronouns, role descriptions masquerading as accomplishments, technology dumps without context, and near-duplicates.
+    **Procedure**:
+    1. **Build terminology index**: Scan ALL text in the KB — `basics.summary`, every `experience[].bullets`, `projects[].description`, `skills` category values, `patents`, `distinctions`, and `recommendations`. Extract every technology name, framework, methodology, acronym, and domain concept.
+    2. **Identify variants**: Group references that point to the same concept but use different forms. Common patterns:
+        - Abbreviation vs. full name: `NLP` vs. `Natural Language Processing` vs. `Natural Language Processing (NLP)`
+        - Library name vs. ecosystem name: `React` vs. `React.js` vs. `ReactJS`
+        - Product vs. generic: `Docker` vs. `Docker Products` vs. `containerization`
+        - Branded vs. descriptive: `Salesforce.com Development` vs. `Salesforce`
+        - Versioned vs. unversioned: `ES6` vs. `JavaScript` vs. `ECMAScript`
+        - Casing variants: `kubernetes` vs. `Kubernetes` vs. `K8s`
+    3. **Select canonical form**: For each group, pick the form that is:
+        - Most widely recognized by ATS parsers (prefer the standard industry name)
+        - Already expanded on first use per ATS acronym rules (e.g., `Natural Language Processing (NLP)` on first occurrence, `NLP` thereafter)
+        - Consistent with what the applicant actually wrote in their source materials
+    4. **Normalize**: Replace all variant forms with the canonical form throughout the KB. For skills specifically, ensure the skill name in `skills{}` exactly matches the term used in bullets so the skill is never orphaned.
+    5. **Cross-reference skills to bullets**: After normalization, verify that every skill listed in `skills{}` appears in at least one bullet, project description, or summary. Flag any skill that has zero textual evidence anywhere in the KB — these are candidates for removal or need a bullet to support them.
+    6. **Report**: Present the normalization map to the user (e.g., `React.js → React` across 4 occurrences). Apply silently unless a normalization changes meaning.
+
+    **Pass 2 — Summary Audit**: Evaluate `basics.summary` against the entire career corpus. Does it reflect the strongest differentiators? Does it undersell key themes? Present current summary, analysis, and proposed revision.
+
+    **Pass 3 — Bullet Strengthening (Quantification Interview)**: Scan every bullet for passive voice, vague language, missing metrics, unspecific scale, first-person pronouns, role descriptions masquerading as accomplishments, technology dumps without context, and near-duplicates.
 
     **CRITICAL — One-at-a-Time Presentation**: Present ONE bullet at a time:
     ```
@@ -161,11 +180,11 @@ Praxis uses a single command with three modes. The orchestrator dispatches based
     ```
     Wait for the user's answer before presenting the next bullet.
 
-    **Pass 3 — Skill Evidence Backfill**: For every skill still marked as placeholder, search all bullets and project descriptions for contextual evidence.
+    **Pass 4 — Skill Evidence Backfill**: For every skill still marked as placeholder, search all bullets and project descriptions for contextual evidence.
 
-    **Pass 4 — Distinction Mining**: Scan all data for achievements that deserve elevation to `distinctions[]` — quantified impact, firsts/records, company-defining moments, external recognition.
+    **Pass 5 — Distinction Mining**: Scan all data for achievements that deserve elevation to `distinctions[]` — quantified impact, firsts/records, company-defining moments, external recognition.
 
-    **Pass 5 — Spelling & Grammar Audit**: Fix all spelling, grammar, and punctuation errors silently. Report what was changed after the fact. Only prompt when a correction changes meaning.
+    **Pass 6 — Spelling & Grammar Audit**: Fix all spelling, grammar, and punctuation errors silently. Report what was changed after the fact. Only prompt when a correction changes meaning.
 
 4. **GitHub Sync**: Run `bash skills/praxis/scripts/github_sync.sh` to fetch public repos and READMEs.
 
