@@ -1,0 +1,31 @@
+# Praxis Environment
+.praxis/
+.sessions/
+
+# Raw Data & PII
+*.pdf
+*.docx
+*.csv
+*.zip
+*.tar.gz
+*.tar
+*cv*
+*resume*
+*Resume*
+interview_responses.txt
+deep_harvest_data.txt
+knowledge_base.md
+
+# OS & Environment
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+
+# Local Config
+.env
+.env.local
+
+# Generated Output
+*_Profile.md
+Tailored_*.md

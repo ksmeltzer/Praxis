@@ -1,0 +1,29 @@
+{
+  "description": "Recommended model mappings for the Praxis 2-Agent Adversarial Loop.",
+  "providers": {
+    "github_copilot": {
+      "agent": {
+        "praxis-pathos": { "model": "github-copilot/claude-sonnet-4.6" },
+        "praxis-logos": { "model": "github-copilot/gpt-4o" }
+      }
+    },
+    "openai_anthropic_direct": {
+      "agent": {
+        "praxis-pathos": { "model": "anthropic/claude-3-5-sonnet-latest" },
+        "praxis-logos": { "model": "openai/o1-preview" }
+      }
+    },
+    "openrouter": {
+      "agent": {
+        "praxis-pathos": { "model": "openrouter/anthropic/claude-3.5-sonnet" },
+        "praxis-logos": { "model": "openrouter/openai/gpt-4o" }
+      }
+    },
+    "opencode_zen": {
+      "agent": {
+        "praxis-pathos": { "model": "claude-3-5-sonnet" },
+        "praxis-logos": { "model": "gpt-4o" }
+      }
+    }
+  }
+}
