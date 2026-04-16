@@ -27,9 +27,8 @@ fi
 
 echo "🔄 Fetching public repos for $GH_USER..."
 
-# Fetch all public, non-fork, non-archived repos with description and language
-# Output as JSON array compatible with knowledge_base.json
-PROJECTS_JSON=$(gh repo list "$GH_USER" \
+# Fetch all public, non-fork, non-archived repos
+REPOS_JSON=$(gh repo list "$GH_USER" \
     --source \
     --no-archived \
     --visibility public \
@@ -37,25 +36,36 @@ PROJECTS_JSON=$(gh repo list "$GH_USER" \
     --json name,description,url,primaryLanguage,stargazerCount,updatedAt \
     2>/dev/null || echo "[]")
 
-REPO_COUNT=$(echo "$PROJECTS_JSON" | jq 'length')
+REPO_COUNT=$(echo "$REPOS_JSON" | jq 'length')
 
 if [ "$REPO_COUNT" -eq 0 ]; then
     echo "⚠️  No public repos found. Skipping GitHub sync."
     exit 0
 fi
 
-# Transform gh output into our schema and merge into knowledge_base.json
-# Schema: { name, description, url, language, stars }
+# Merge: only ADD repos whose name doesn't already exist in the projects array.
+# This preserves richer data from the GitHub export or manual curation.
 tmp=$(mktemp)
-echo "$PROJECTS_JSON" | jq --slurpfile kb "$KB_FILE" '
-  [.[] | {
-    name: .name,
-    description: (.description // "No description"),
-    url: .url,
-    language: (.primaryLanguage.name // "Unknown"),
-    stars: .stargazerCount
-  }] as $repos |
-  $kb[0] | .projects = $repos
-' > "$tmp" && mv -f "$tmp" "$KB_FILE"
+jq --argjson repos "$REPOS_JSON" '
+  (.projects // []) as $existing |
+  ($existing | map(.name) | map(ascii_downcase)) as $existing_names |
+  [
+    $repos[] |
+    select((.name | ascii_downcase) as $n | $existing_names | index($n) | not) |
+    {
+      name: .name,
+      description: (.description // "No description"),
+      url: .url,
+      language: (.primaryLanguage.name // "Unknown"),
+      stars: .stargazerCount
+    }
+  ] as $new_repos |
+  .projects = ($existing + $new_repos)
+' "$KB_FILE" > "$tmp" && mv -f "$tmp" "$KB_FILE"
 
-echo "✅ GitHub Sync complete. $REPO_COUNT repos synced from $GH_USER."
+NEW_COUNT=$(echo "" | jq --argjson repos "$REPOS_JSON" --slurpfile kb "$KB_FILE" '
+  ($kb[0].projects | map(.name | ascii_downcase)) as $all |
+  [$repos[] | select((.name | ascii_downcase) as $n | $all | index($n) | not)] | length
+')
+
+echo "✅ GitHub Sync complete. $REPO_COUNT repos found, merged into existing projects."

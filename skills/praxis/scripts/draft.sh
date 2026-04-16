@@ -17,26 +17,22 @@ if [ -f "$RULES_FILE" ]; then
     EMAIL=$(jq -r '.contact_info.email // empty' "$RULES_FILE" 2>/dev/null || true)
     LINKEDIN=$(jq -r '.contact_info.linkedin // empty' "$RULES_FILE" 2>/dev/null || true)
     GITHUB=$(jq -r '.contact_info.github // empty' "$RULES_FILE" 2>/dev/null || true)
-    SECTION_ORDER=$(jq -r '.section_order.order // empty' "$RULES_FILE" 2>/dev/null || true)
     EXCLUDED_COMPANIES=$(jq -r '.exclusions.companies // [] | .[]' "$RULES_FILE" 2>/dev/null || true)
 fi
 
-# Defaults
-[ -z "$PHONE" ] && PHONE=""
-[ -z "$EMAIL" ] && EMAIL=""
-[ -z "$LINKEDIN" ] && LINKEDIN=""
-[ -z "$GITHUB" ] && GITHUB=""
+# Fallback to knowledge_base basics
+[ -z "$PHONE" ] && PHONE=$(jq -r '.basics.phone // ""' "$KB_FILE")
+[ -z "$EMAIL" ] && EMAIL=$(jq -r '.basics.email // ""' "$KB_FILE")
+[ -z "$LINKEDIN" ] && LINKEDIN=$(jq -r '.basics.linkedin // ""' "$KB_FILE")
+[ -z "$GITHUB" ] && GITHUB=$(jq -r '.basics.github // ""' "$KB_FILE")
 
 # Extract from JSON
 NAME=$(jq -r '.basics.name // "Name"' "$KB_FILE")
 HEADLINE=$(jq -r '.basics.headline // "Professional"' "$KB_FILE")
 SUMMARY=$(jq -r '.basics.summary // "No summary provided."' "$KB_FILE")
-SKILLS=$(jq -r '(.skills | keys | join(", "))' "$KB_FILE")
 
-# Cap skills display at ~30
-if [ "$(echo "$SKILLS" | wc -c)" -gt 300 ]; then
-  SKILLS=$(jq -r '.skills | keys | .[0:30] | join(", ")' "$KB_FILE")
-fi
+# Build flat skills list from categorized skills object
+SKILLS=$(jq -r '[.skills | to_entries[] | .key] | join(", ")' "$KB_FILE")
 
 # Build contact line
 CONTACT_PARTS=()
@@ -54,27 +50,25 @@ gen_summary() {
 }
 
 gen_skills() {
-    echo "## Skills"
-    echo "**Core Competencies:** ${SKILLS}"
+    echo "## Technical Skills"
+    # Render each category with its skills
+    jq -r '.skills | to_entries[] | "**\(.key):** \(.value | join(", "))"' "$KB_FILE"
     echo ""
 }
 
 gen_distinctions() {
-    echo "## Distinctions"
-    local d
-    d=$(jq -r '(.distinctions // [])[] | "- **\(.title)**: \(.description)\(if .url then " [\(.url)](\(.url))" else "" end)\(if .date then " (\(.date))" else "" end)"' "$KB_FILE" 2>/dev/null || true)
-    if [ -n "$d" ]; then
-        echo "$d"
-    else
-        echo "_None recorded._"
+    local patent_count
+    patent_count=$(jq '(.patents // []) | length' "$KB_FILE" 2>/dev/null || echo "0")
+    if [ "$patent_count" -gt 0 ]; then
+        echo "## Distinctions"
+        jq -r '(.patents // [])[] | "- **Patent \(.issuer)**: \(.title) — \(.description)\(if .url then " [View](\(.url))" else "" end)"' "$KB_FILE"
+        echo ""
     fi
-    echo ""
 }
 
 gen_experience() {
     echo "## Experience"
-    # Build exclusion filter
-    local filter=".work[]"
+    # Schema: .experience[] with .company, .title, .dates, .location, .bullets
     if [ -n "$EXCLUDED_COMPANIES" ]; then
         local excludes=""
         while IFS= read -r comp; do
@@ -87,20 +81,20 @@ gen_experience() {
         done <<< "$EXCLUDED_COMPANIES"
         if [ -n "$excludes" ]; then
             jq -r --argjson excl "[$excludes]" '
-              [.work[] | select(.company as $c | $excl | map(. as $e | $c | ascii_downcase | contains($e | ascii_downcase)) | any | not)] |
-              .[] | "### \(.position)\n**\(.company)** | \(.startDate) - \(.endDate)\(if .location != "" and .location != null then " | " + .location else "" end)\n\n\(.bullets | map("- " + .) | join("\n"))\n"
+              [.experience[] | select(.company as $c | $excl | map(. as $e | $c | ascii_downcase | contains($e | ascii_downcase)) | any | not)] |
+              .[] | "### \(.title)\n**\(.company)** | \(.dates)\(if .location != "" and .location != null then " | " + .location else "" end)\n\n\(.bullets | map("- " + .) | join("\n"))\n"
             ' "$KB_FILE"
             echo ""
             return
         fi
     fi
-    jq -r '.work[] | "### \(.position)\n**\(.company)** | \(.startDate) - \(.endDate)\(if .location != "" and .location != null then " | " + .location else "" end)\n\n\(.bullets | map("- " + .) | join("\n"))\n"' "$KB_FILE"
+    jq -r '.experience[] | "### \(.title)\n**\(.company)** | \(.dates)\(if .location != "" and .location != null then " | " + .location else "" end)\n\n\(.bullets | map("- " + .) | join("\n"))\n"' "$KB_FILE"
     echo ""
 }
 
 gen_education() {
     echo "## Education"
-    jq -r '(.education // [])[] | "### \(.institution)\n**\(.degree)**\(if .field then " — " + .field else "" end)\(if .startDate then " | " + .startDate else "" end)\(if .endDate then " - " + .endDate else "" end)\n\(if .notes then .notes + "\n" else "" end)"' "$KB_FILE" 2>/dev/null || echo "_None recorded._"
+    jq -r '(.education // [])[] | "### \(.school)\n**\(.degree)**\(if .major then " — " + .major else "" end)\(if .minor then " (Minor: " + .minor + ")" else "" end)\(if .dates then " | " + .dates else "" end)\n"' "$KB_FILE" 2>/dev/null || echo "_None recorded._"
     echo ""
 }
 
@@ -109,7 +103,7 @@ gen_certifications() {
     count=$(jq '(.certifications // []) | length' "$KB_FILE" 2>/dev/null || echo "0")
     if [ "$count" -gt 0 ]; then
         echo "## Certifications"
-        jq -r '(.certifications // [])[] | "- **\(.institution)**: \(.name)"' "$KB_FILE"
+        jq -r '(.certifications // [])[] | "- **\(.issuer)**: \(.name)"' "$KB_FILE"
         echo ""
     fi
 }
@@ -119,7 +113,7 @@ gen_projects() {
     count=$(jq '(.projects // []) | length' "$KB_FILE" 2>/dev/null || echo "0")
     if [ "$count" -gt 0 ]; then
         echo "## Open Source Projects"
-        jq -r '(.projects // [])[] | "- **[\(.name)](\(.url))** (\(.language // "N/A"))\(if .stars > 0 then " ⭐" + (.stars|tostring) else "" end): \(.description)"' "$KB_FILE"
+        jq -r '(.projects // [])[] | "- **[\(.name)](\(.url // "#"))**: \(.description)\(if .dates then " (" + .dates + ")" else "" end)"' "$KB_FILE"
         echo ""
     fi
 }
@@ -129,10 +123,9 @@ gen_projects() {
     echo "# ${NAME}"
     echo "${CONTACT_LINE}"
     echo ""
-    echo "## ${HEADLINE}"
+    echo "*${HEADLINE}*"
     echo ""
 
-    # Default section order
     DEFAULT_ORDER="summary skills distinctions experience education certifications projects"
 
     for section in $DEFAULT_ORDER; do
@@ -148,4 +141,4 @@ gen_projects() {
     done
 } > assets/Resume.md
 
-echo "Draft generated at assets/Resume.md"
+echo "✅ Draft generated at assets/Resume.md"
