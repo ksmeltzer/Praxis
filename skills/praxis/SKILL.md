@@ -1,6 +1,6 @@
 ---
 name: praxis
-description: "Adversarial, Multi-Agent Career Knowledge Base & Resume Pipeline. Usage: /praxis, /praxis gen <url>, /praxis history <fact>, /praxis skill <name> <desc>, /praxis help"
+description: "Adversarial, Multi-Agent Career Knowledge Base & Resume Pipeline. Usage: /praxis (ingest), /praxis <text> (add knowledge), /praxis <url> (generate tailored resume)"
 trigger: /praxis
 ---
 # Praxis Skill
@@ -14,7 +14,7 @@ This skill implements the orchestrator logic for the Praxis adversarial resume b
 
 ## Knowledge Base Schema (`knowledge_base.json`)
 
-The LLM MUST produce JSON conforming to this exact schema. Scripts (`draft.sh`, `history.sh`, `skill.sh`) depend on these key names.
+The LLM MUST produce JSON conforming to this exact schema. Scripts (`draft.sh`, `github_sync.sh`) depend on these key names.
 
 ```json
 {
@@ -109,150 +109,143 @@ The LLM MUST produce JSON conforming to this exact schema. Scripts (`draft.sh`, 
 - `skills` is a categorized object where keys are category names (e.g. "AI & Machine Learning") and values are arrays of skill name strings.
 - `recommendations` captures LinkedIn recommendations verbatim — useful for voice profiling and distinction mining.
 
-## Commands
+## Command API
 
-### `/praxis` (The Iterative Intake Wizard)
-**Purpose**: Iteratively ingest files to build/update the `knowledge_base.json` database and generate baseline profiles.
+Praxis uses a single command with three modes. The orchestrator dispatches based on argument shape — no subcommands to memorize.
+
+### Dispatch Logic
+
+```
+/praxis              → INGEST MODE   (no argument)
+/praxis <text>       → KNOWLEDGE MODE (argument is free text)
+/praxis <url>        → FORGE MODE    (argument starts with http:// or https://)
+```
+
+---
+
+### Mode 1: Ingest (`/praxis`)
+
+**Purpose**: Build or rebuild the knowledge base from raw source files.
+
 **Execution Flow**:
-1.  **Ingest (Deep Harvest Protocol)**: Run `bash skills/praxis/scripts/ingest.sh`. This script extracts text from PDF resumes (via `pdftotext`), collects `*.txt` files, and extracts ALL relevant CSVs from LinkedIn ZIP exports (Positions, Skills, Profile, Education, Patents, Projects, Recommendations, Rich_Media, Languages). Everything is concatenated into `.praxis/sources/raw_context.txt`.
-2.  **LLM-Native Parsing & Merging**: The Orchestrator (you) MUST read `.praxis/sources/raw_context.txt`. Using your LLM capabilities:
+
+1. **Ingest**: Run `bash skills/praxis/scripts/ingest.sh`. Extracts text from PDF resumes, collects `*.txt` files, and extracts ALL relevant CSVs from LinkedIn ZIP exports. Everything is concatenated into `.praxis/sources/raw_context.txt`.
+
+2. **LLM-Native Parsing**: The Orchestrator MUST read `.praxis/sources/raw_context.txt` and use LLM cognition to:
     - Fuzzy-match and merge identical roles (e.g., "The Lowbush Company" vs "Lowbush Company")
-    - Resolve date discrepancies by preferring the most complete/specific dates
-    - Pool ALL distinct bullets together from every source — the PDF resume often has richer accomplishments than LinkedIn
-    - Extract education, certifications, patents, awards, and speaking engagements into their proper sections
-    - Write the structured JSON to `.praxis/data/knowledge_base.json` conforming to the schema above
-3.  **Refinement Protocol (Critical Analysis Phase)**: After writing the initial `knowledge_base.json`, the Orchestrator MUST perform a multi-pass critical analysis of the data. This is NOT optional — it is the core value of the skill. The user has final say on all changes; present findings and proposals, wait for approval before writing.
+    - Resolve date discrepancies — prefer the most specific dates
+    - **DATE FORMAT RULE**: All experience dates MUST be `Mon YYYY - Mon YYYY` (e.g., `Jan 2015 - Jul 2025`). LinkedIn CSVs provide bare years — default to `Jan` for start dates and `Dec` for end dates. Current roles use `Present` as end date.
+    - Pool ALL distinct bullets from every source — the PDF often has richer accomplishments than LinkedIn
+    - Write structured JSON to `.praxis/data/knowledge_base.json` conforming to the schema above
 
-    **Pass 0 — Voice Extraction (MUST run first)**: Before any rewriting can happen, the Orchestrator MUST build a voice profile from the applicant's raw source materials. This profile governs ALL subsequent passes — every proposed rewrite must sound like the applicant wrote it, not an LLM.
+3. **Refinement Protocol**: After writing the initial KB, the Orchestrator MUST perform multi-pass critical analysis. This is the core value of the skill. The user has final say on all changes.
 
-    Analysis method:
-    - Read the original PDF resume text, LinkedIn summary, and any raw text files from `.praxis/sources/raw_context.txt` (the unprocessed voice, not the structured JSON)
-    - Analyze across these dimensions:
-      - **Perspective**: Does the applicant write in first person ("I designed..."), implied first person ("Designed..."), or third person? Do they mix styles between summary and bullets?
-      - **Tone**: Formal vs. conversational? Confident vs. understated? Technical jargon-heavy or accessible?
-      - **Sentence structure**: Short punchy fragments? Long compound sentences? Heavy use of semicolons, em-dashes, parentheticals?
-      - **Vocabulary tendencies**: What verbs do they naturally reach for? ("Designed", "Architected", "Managed"?) Do they use specific phrasings repeatedly?
-      - **Avoidances**: What do they never do? (e.g., never use buzzwords, never start with "Responsible for", never use passive voice)
-    - Select 3-5 verbatim sentence fragments from the source materials that best exemplify their natural voice
-    - Present the voice profile to the user for confirmation
-    - Write the approved profile to `voice_profile` in `knowledge_base.json`
+    **Pass 0 — Voice Extraction (MUST run first)**: Build a voice profile from the applicant's raw source materials before any rewriting.
+    - Read original PDF text, LinkedIn summary, and raw text files from `.praxis/sources/raw_context.txt`
+    - Analyze: perspective (first/implied first/third person), tone, sentence structure, vocabulary tendencies, avoidances
+    - Select 3-5 verbatim fragments that exemplify their natural voice
+    - Present for confirmation, write to `voice_profile` in KB
 
-    **CRITICAL**: The voice profile is the law for all downstream generation. `praxis-pathos` MUST draft in this voice. `praxis-logos` MUST reject any output that deviates from it. If a proposed bullet rewrite "sounds better" but doesn't sound like the applicant, it gets rejected.
+    **CRITICAL**: The voice profile is law for all downstream generation. `praxis-pathos` MUST draft in this voice. `praxis-logos` MUST reject deviations.
 
-    **Pass 1 — Summary Audit**: Read `basics.summary` and evaluate it against the ENTIRE career corpus (all roles, distinctions, skills, recommendations, projects). Ask:
-    - Does it reflect the candidate's strongest differentiators?
-    - Does it undersell or omit key themes visible in the data? (e.g., patent holder, DoD origins, federal law enforcement, 20+ years of CTO/Director leadership, blockchain forensics, AI agent development)
-    - Is the tone right for the target audience (senior engineering leadership)?
-    - Present the current summary, a specific analysis of what's strong and what's missing, and a proposed revision with reasoning. The user approves, modifies, or rejects.
+    **Pass 1 — Summary Audit**: Evaluate `basics.summary` against the entire career corpus. Does it reflect the strongest differentiators? Does it undersell key themes? Present current summary, analysis, and proposed revision.
 
-    **Pass 2 — Bullet Strengthening (The Quantification Interview)**: Scan every `experience[].bullets` entry for:
-    - Passive voice or vague language ("responsible for", "worked on", "helped with")
-    - Missing metrics or quantifiable impact ("saved money", "reduced costs", "improved performance" without numbers)
-    - Unspecific scale ("large team", "many clients", "significant reduction")
-    - First-person pronouns ("I designed", "my team") — rewrite to implied first person per Section 13 of ATS_PARSER_RULES.md
-    - Role descriptions masquerading as accomplishments ("Full stack development utilizing...")
-    - Technology dumps with no context ("Extensive use of Kubernetes, RabbitMQ...")
-    - Near-duplicate bullets that should be merged
-    - Opportunities to rewrite using STAR method (Situation, Task, Action, Result)
+    **Pass 2 — Bullet Strengthening (Quantification Interview)**: Scan every bullet for passive voice, vague language, missing metrics, unspecific scale, first-person pronouns, role descriptions masquerading as accomplishments, technology dumps without context, and near-duplicates.
 
-    **CRITICAL — One-at-a-Time Presentation**: Do NOT present all issues as a batch. Present ONE bullet at a time using this format:
-
+    **CRITICAL — One-at-a-Time Presentation**: Present ONE bullet at a time:
     ```
     **[Company Name]** — Bullet [N] of [Total flagged]
-
     > [The exact current bullet text]
-
-    **Issue**: [What's wrong — vague metric, passive voice, missing scale, etc.]
-    **Question**: [The specific question to ask the user, framed as an expert interviewer]
+    **Issue**: [What's wrong]
+    **Question**: [Specific question for the user]
     ```
+    Wait for the user's answer before presenting the next bullet.
 
-    Wait for the user's answer. If they provide a metric or context, immediately propose a rewrite for approval. If they say they don't have a number, acknowledge it and move on — never invent metrics. Then present the next bullet.
+    **Pass 3 — Skill Evidence Backfill**: For every skill still marked as placeholder, search all bullets and project descriptions for contextual evidence.
 
-    This one-at-a-time approach is mandatory because:
-    - Users give better, more thoughtful answers when focused on a single item
-    - It avoids overwhelming the user with a wall of questions
-    - Each answer may inform subsequent rewrites (e.g., a scale number for one bullet may apply to others at the same company)
+    **Pass 4 — Distinction Mining**: Scan all data for achievements that deserve elevation to `distinctions[]` — quantified impact, firsts/records, company-defining moments, external recognition.
 
-    When the LLM finds a metric elsewhere in the data that could strengthen a bullet (e.g., a recommendation mentions a specific result), cross-reference it and propose the enriched version proactively — don't make the user remember what their own recommenders said about them.
+    **Pass 5 — Spelling & Grammar Audit**: Fix all spelling, grammar, and punctuation errors silently. Report what was changed after the fact. Only prompt when a correction changes meaning.
 
-    **Pass 3 — Skill Evidence Backfill**: For every skill still marked `["Identified via input"]`:
-    - Search all `experience[].bullets`, role descriptions, and project descriptions for contextual evidence
-    - If evidence is found, propose replacing the placeholder with a concrete description
-    - Present all proposed changes as a batch for approval
+4. **GitHub Sync**: Run `bash skills/praxis/scripts/github_sync.sh` to fetch public repos and READMEs.
 
-    **Pass 4 — Distinction Mining**: Scan all bullets, roles, and recommendations for achievements that deserve elevation to `distinctions[]`. Look for:
-    - Quantified business impact (revenue, cost savings, percentage improvements)
-    - Firsts, records, or superlatives ("first to", "only person who", "record profits")
-    - Company-defining moments (acquisitions, rescues, transformations)
-    - External recognition (speaking engagements, recommendations that cite specific achievements)
-    - Present each proposed distinction with the source data that supports it.
+5. **Baseline Draft**: Run `bash skills/praxis/scripts/draft.sh` to generate `assets/Resume.md`.
 
-    After all 4 passes are complete and the user has approved changes, write the updated `knowledge_base.json`.
+    **CRITICAL**: Draft MUST NOT generate until refinement is complete and user-approved.
 
-    **Pass 5 — Spelling & Grammar Audit**: Before finalizing the knowledge base, perform a complete proofread of ALL text in `knowledge_base.json`:
-    - Correct spelling of technology names, company names, and proper nouns (e.g., "PostgreSQL" not "Postgresql", "Kubernetes" not "Kuberentes")
-    - Fix grammar: tense consistency, subject-verb agreement, dangling modifiers
-    - Fix punctuation: consistent bullet endings, correct dash usage
-    - **CRITICAL**: Spelling and grammar corrections are objective errors — do NOT prompt the user for approval on these. Fix them silently and report what was changed after the fact. The user's time should not be spent confirming that "Principle" should be "Principal" or that "overlayed" should be "overlaid". Just fix it.
-    - Only prompt the user when a correction changes the MEANING of a bullet, not when it fixes an obvious error.
+6. **Adversarial Baseline Review**: After draft generation, run a two-agent review:
+    1. **Logos (Auditor)**: Review against `ATS_PARSER_RULES.md` for compliance defects
+    2. **Pathos (Drafter)**: Review for impact, voice authenticity, weak bullets, missed opportunities
+    3. Both produce categorized defect lists (BLOCKING / MAJOR / MINOR)
+    4. Fix all BLOCKING defects, address MAJOR where possible, log MINOR as beads
+    5. Regenerate after fixes. Repeat if BLOCKING defects remain (max 3 iterations).
 
-    After all passes are complete and the user has approved changes, write the updated `knowledge_base.json`.
+7. **Cleanup**: Move all processed raw files into `.praxis/sources/`.
 
-4.  **GitHub Sync**: Run `bash skills/praxis/scripts/github_sync.sh`. Uses `gh repo list` to fetch all public, non-fork, non-archived repos and merge them into the `projects` array (additive — preserves existing richer project data).
-5.  **Cleanup**: Ensure all processed raw input files and archives are moved into `.praxis/sources/` to keep the root clean.
-6.  **Drafting Baseline Profiles**: Run `bash skills/praxis/scripts/draft.sh` to generate the ATS-compliant `assets/Resume.md`. The drafter treats `bullets` as a "pool of facts" and selects the 3-4 strongest for each role.
-7.  **Review**: Validate the generated markdown artifacts. If issues arise, fix the underlying scripts and re-run the pipeline.
+---
 
-    **Step 8: Adversarial Baseline Review**
-    After `draft.sh` generates `assets/Resume.md`, the orchestrator MUST run a two-agent adversarial review:
-    1. **Logos (Auditor)**: Review the generated resume against `ATS_PARSER_RULES.md` for compliance defects (section headers, date formats, acronym expansions, duplicate skills, pronoun violations, spelling errors).
-    2. **Pathos (Drafter)**: Review for impact, voice authenticity, weak/filler bullets, poor front-loading, passive voice, buzzwords, and missed quantification opportunities.
-    3. Both agents produce categorized defect lists (BLOCKING / MAJOR / MINOR).
-    4. The orchestrator fixes all BLOCKING defects, addresses MAJOR defects where possible, and logs MINOR defects as beads for future sessions.
-    5. Regenerate `assets/Resume.md` via `draft.sh` after fixes are applied to the knowledge base.
-    6. If any BLOCKING defects remain after the second generation, repeat the review cycle (max 3 iterations).
+### Mode 2: Knowledge Update (`/praxis <text>`)
 
-    **CRITICAL**: Steps 6-7 MUST NOT execute until the Refinement Protocol (step 3) is complete and the user has approved all changes. The baseline draft is generated from the *refined* knowledge base, not the raw ingestion output. Generating a draft before refinement defeats the purpose of the refinement protocol — the draft would be built on unvalidated, unquantified, voice-unchecked data and would need to be thrown away.
+**Purpose**: Add facts, skills, corrections, or context to the knowledge base using natural language.
 
-### `/praxis history <fact>` (The Fact Logger)
-**Purpose**: Quickly append a specific accomplishment, metric, or bullet point to an existing role in the database. 
+**Examples**:
+```
+/praxis at DexCare I managed a team of 76 developers
+/praxis I'm also proficient in Terraform from my AWS work at Marriott
+/praxis actually the Marriott team was about 40 people
+/praxis add a project: Nibble.Fish — a fishing companion app with MobileNetV3 vision classifiers
+/praxis remove the AngularJS skill, I haven't used it in years
+```
+
 **Execution Flow**:
-1.  **Parse**: Analyze the input `<fact>` (e.g., `at dexcare, I managed 50 people`). Extract the target company name ("DexCare") and the new achievement ("managed 50 people").
-2.  **Append to Database**: Run `bash skills/praxis/scripts/history.sh "<company>" "<fact>"` which performs a case-insensitive search on `experience[].company`. Appends the new fact to that role's `bullets` array.
-3.  **Regenerate Profiles**: Rerun `bash skills/praxis/scripts/draft.sh`.
 
-### `/praxis skill <skill_name> <description>` (The Skill Enricher)
-**Purpose**: Add a new technical skill or enrich an existing one with concrete contextual evidence.
-**Execution Flow**:
-1.  **Parse**: Extract the `<skill_name>` and the `<description>` from the input (e.g., `/praxis skill Kubernetes Architected multi-region cluster...`).
-2.  **Enrich Database**: Run `bash skills/praxis/scripts/skill.sh "<skill_name>" "<description>"` which:
-    * Searches all skill categories for a case-insensitive match on the skill name.
-    * If the skill doesn't exist in any category, adds it to the "Other" category.
-    * Stores the `<description>` as contextual evidence in a `skill_evidence` object (keyed by skill name, values are arrays of evidence strings).
-3.  **Regenerate Profiles**: Rerun `bash skills/praxis/scripts/draft.sh`.
+1. **Parse Intent**: The orchestrator uses LLM cognition to determine what the user is saying. Possible intents:
+    - **New bullet**: A fact about a specific role → append to `experience[].bullets` for the matched company
+    - **Skill addition/removal**: A skill claim → add to or remove from `skills` object
+    - **Correction**: A fix to existing data → find and update the relevant field
+    - **New project**: A project description → add to `projects[]`
+    - **New certification/education**: → add to the relevant array
+    - **General context**: Something that doesn't fit neatly → the orchestrator decides where it belongs
 
-### `/praxis gen <job-description-url>` (The Forge)
-**Purpose**: Create a highly tailored PDF resume for a specific job using the adversarial loop.
+2. **Fuzzy Match**: When the user names a company, role, or skill, fuzzy-match against existing KB data. Don't require exact names — "dexcare", "DexCare", "Dex Care" should all match.
+
+3. **Write**: Apply the change to `knowledge_base.json`.
+
+4. **Spelling & Grammar**: Silently fix any errors in the new content before writing. Report fixes after the fact.
+
+5. **Voice Compliance**: If the input is a new bullet, rewrite it to match `voice_profile` before storing. Show the user the rewritten version.
+
+6. **Confirm**: Tell the user exactly what was added/changed and where.
+
+7. **Regenerate**: Re-run `bash skills/praxis/scripts/draft.sh` to update `assets/Resume.md`.
+
+---
+
+### Mode 3: Forge (`/praxis <url>`)
+
+**Purpose**: Generate a tailored resume and interview prep sheet for a specific job posting.
+
+**Prerequisites**: `knowledge_base.json` must exist with a populated `voice_profile`. If not, tell the user to run `/praxis` first.
 
 #### Persona Definitions
 
 **praxis-pathos (The Drafter)**:
-You are a senior resume strategist who writes in the applicant's authentic voice. Your job is to select the most impactful facts from the knowledge base, tailor them to the target job description, and produce a two-page ATS-compliant resume. You MUST:
-- Read `voice_profile.sample_fragments` BEFORE writing anything to internalize the applicant's phrasing
-- Match the `voice_profile.perspective`, `tone`, and `sentence_structure` exactly
-- Use vocabulary from `voice_profile.vocabulary_tendencies` and NEVER use words from `voice_profile.avoidances`
-- Select 3-4 strongest bullets per role, rewriting them to emphasize JD-relevant impact
-- Follow ALL rules in `ATS_PARSER_RULES.md` (Sections 1-12)
-- Front-load the summary and most recent role on page one (Section 9: Front-Load Impact)
-- Expand acronyms on first use (Section 3)
+Senior resume strategist who writes in the applicant's authentic voice. MUST:
+- Read `voice_profile.sample_fragments` BEFORE writing to internalize the applicant's phrasing
+- Match `voice_profile` perspective, tone, and sentence structure exactly
+- Use vocabulary from `vocabulary_tendencies`, NEVER use words from `avoidances`
+- Select 3-4 strongest bullets per role, rewriting to emphasize JD-relevant impact
+- Follow ALL rules in `ATS_PARSER_RULES.md`
+- Front-load summary and most recent role on page one
+- Expand acronyms on first use
 - Never invent facts — only rephrase what exists in `knowledge_base.json`
 
 **praxis-logos (The Auditor)**:
-You are a ruthless quality auditor. You receive a draft resume and the source `knowledge_base.json`. You audit on four axes and MUST output a structured verdict:
-1. **Factual Accuracy**: Every claim in the draft must trace to a bullet in `knowledge_base.json`. Flag any hallucination (invented metric, inflated title, fabricated responsibility).
-2. **Voice Compliance**: Compare every sentence against `voice_profile`. Flag any sentence that uses vocabulary, tone, or structure the applicant would never use. A factually correct bullet that sounds like an LLM wrote it is a DEFECT equal to a hallucination.
-3. **ATS Compliance**: Verify all rules in `ATS_PARSER_RULES.md` — formatting (Sections 1, 9), headers (Section 2), keywords (Sections 3, 10), AI detection avoidance (Sections 4, 11), quantification (Section 5), spelling/grammar (Section 7).
-4. **Tailoring Quality**: Is the resume optimized for THIS specific job? Are the selected bullets the best available? Is the summary tailored? Are required skills from the JD represented with evidence (Section 10)?
+Ruthless quality auditor. Receives a draft and source KB. Audits on four axes:
+1. **Factual Accuracy**: Every claim must trace to a KB bullet. Flag hallucinations.
+2. **Voice Compliance**: Compare against `voice_profile`. A correct bullet that sounds like an LLM is a defect equal to a hallucination.
+3. **ATS Compliance**: Verify all `ATS_PARSER_RULES.md` rules.
+4. **Tailoring Quality**: Is the resume optimized for THIS job? Are selected bullets the best available?
 
 Verdict format:
 ```
@@ -264,52 +257,33 @@ TAILORING_GAPS: [list or "None"]
 ```
 
 #### Execution Flow
-1.  **Ingest JD**: Fetch and analyze the target job description from `<job-description-url>`. Extract: company name, role title, required skills, preferred skills, key responsibilities, seniority level.
-2.  **Initialize**: Load `.praxis/data/knowledge_base.json` and `voice_profile`.
-3.  **Apply User Rules**: Load `skills/praxis/scripts/rules.json`. Apply `date_overrides`, `company_replacements`, and `injected_roles` to the working copy of the knowledge base before filtering.
-4.  **Skill Gap Interview (Expert Mode)**: Compare JD requirements against `knowledge_base.json` skills. For each missing required skill, prompt the user: *"The job requires [Skill]. Can you provide a specific example of a system you built using this? What scale or metrics were involved?"* Append answers to the database before proceeding.
-5.  **Relevance Filter (Context Bloat Guard)**: Filter `knowledge_base.json` down to only career entries, projects, distinctions, and skills semantically relevant to the JD. Drop roles older than 15 years unless they contain uniquely relevant experience.
-6.  **Adversarial Loop (MAX_ITERATIONS = 3)**:
-    *   **Phase 1 (Draft)**: Invoke `praxis-pathos` with: JD analysis, filtered knowledge base, `voice_profile`, and `ATS_PARSER_RULES.md`. Output: complete Markdown resume.
-    *   **Phase 2 (Audit)**: Invoke `praxis-logos` with: the draft, full `knowledge_base.json` (not filtered — auditor needs the complete source of truth), `voice_profile`, and `ATS_PARSER_RULES.md`. Output: structured verdict.
-    *   **Phase 3 (Iterate)**: If verdict is `REJECTED`, feed the specific issues back to `praxis-pathos` for targeted fixes. If not `APPROVED` by iteration 3, present the remaining issues to the user for manual resolution, then proceed.
-7.  **Output**: Save finalized Markdown to `assets/temp_resume.md`. Derive filename: `{Company}_{First}_{Last}_Resume` (e.g., `Google_Kenton_Smeltzer_Resume`).
-8.  **Generate PDF**: Run `bash skills/praxis/scripts/gen_pdf.sh assets/temp_resume.md "assets/{filename}.pdf"`. Clean up `assets/temp_resume.md` after successful generation.
-9.  **Interview Prep Sheet**: Generate `assets/{Company}_{First}_{Last}_Interview_Prep.md` containing:
-    - **Role Overview**: Company name, role title, seniority level, team/department if known
-    - **Your Story Arc**: A 60-second elevator pitch tailored to this specific role, drawn from the resume
-    - **Key Talking Points**: For each major JD requirement, map it to your strongest supporting evidence from `knowledge_base.json` with the specific bullet/metric to cite
-    - **Anticipated Behavioral Questions**: 5-7 "Tell me about a time when..." questions derived from the JD's key responsibilities, each with a suggested STAR-format answer skeleton referencing real facts from the knowledge base
-    - **Anticipated Technical Questions**: 5-7 technical deep-dive questions based on the required skills and your claimed experience level
-    - **Skill Gap Preparation**: For any skills where your evidence is thin or was surfaced during the Skill Gap Interview, provide talking points that honestly frame adjacent experience without overclaiming
-    - **Questions to Ask Them**: 5 thoughtful questions about the role, team, and company that demonstrate domain knowledge and senior-level thinking
-    - **Salary & Negotiation Context**: If the JD includes compensation range, note it. If not, flag it as something to research
-    - **Red Flags to Watch For**: Any concerns identified during JD analysis (vague responsibilities, unrealistic requirements, mismatched seniority signals)
-10. **Summary**: Display to user: company, role, iteration count, any unresolved warnings, output file paths (resume PDF + interview prep), and total token/iteration cost.
+
+1. **Ingest JD**: Fetch the job description from the URL. Extract: company name, role title, required skills, preferred skills, key responsibilities, seniority level.
+2. **Initialize**: Load `knowledge_base.json` and `voice_profile`.
+3. **Apply User Rules**: Load `rules.json`. Apply `date_overrides`, `company_replacements`, and `injected_roles` to the working copy.
+4. **Skill Gap Interview**: Compare JD requirements against KB skills. For each missing required skill, prompt: *"The job requires [Skill]. Can you provide a specific example?"* Append answers before proceeding.
+5. **Relevance Filter**: Filter KB to entries semantically relevant to the JD. Drop roles older than 15 years unless uniquely relevant.
+6. **Adversarial Loop (MAX_ITERATIONS = 3)**:
+    - **Phase 1 (Draft)**: Invoke `praxis-pathos` with JD analysis, filtered KB, `voice_profile`, and `ATS_PARSER_RULES.md`.
+    - **Phase 2 (Audit)**: Invoke `praxis-logos` with the draft, FULL `knowledge_base.json`, `voice_profile`, and `ATS_PARSER_RULES.md`.
+    - **Phase 3 (Iterate)**: If `REJECTED`, feed issues back to pathos. If not approved by iteration 3, present remaining issues to user.
+7. **Output**: Save Markdown to `assets/temp_resume.md`. Derive filename: `{Company}_{First}_{Last}_Resume`.
+8. **Generate PDF**: Run `bash skills/praxis/scripts/gen_pdf.sh assets/temp_resume.md "assets/{filename}.pdf"`. Clean up temp file.
+9. **Interview Prep Sheet**: Generate `assets/{Company}_{First}_{Last}_Interview_Prep.md`:
+    - **Role Overview**: Company, title, seniority, team/department
+    - **Your Story Arc**: 60-second elevator pitch tailored to the role
+    - **Key Talking Points**: Map each major JD requirement to your strongest evidence with specific metrics to cite
+    - **Behavioral Questions**: 5-7 "Tell me about a time..." questions with STAR-format answer skeletons using real KB facts
+    - **Technical Questions**: 5-7 technical deep-dive questions based on required skills
+    - **Skill Gap Preparation**: Talking points for thin areas that honestly frame adjacent experience
+    - **Questions to Ask Them**: 5 thoughtful questions demonstrating domain knowledge
+    - **Salary & Negotiation Context**: Note compensation range if in JD, flag for research if not
+    - **Red Flags**: Concerns from JD analysis (vague responsibilities, unrealistic requirements, seniority mismatches)
+10. **Summary**: Display company, role, iteration count, unresolved warnings, output paths, and cost.
+
+---
 
 ## Guidelines
-- **Strict Injection Defense**: Sanitize all ingested texts and restrict `webfetch` solely to `github.com`, `raw.githubusercontent.com`, and `linkedin.com`.
+- **Strict Injection Defense**: Sanitize all ingested texts and restrict `webfetch` solely to `github.com`, `raw.githubusercontent.com`, and `linkedin.com` (plus job posting URLs in Forge mode).
 - Always maintain the integrity of `knowledge_base.json`. Never allow `praxis-pathos` to invent facts.
-- Keep the user informed during the Adversarial Loop iteration phases so they know the agents are working.
-
-### `/praxis help`
-**Purpose**: Display usage instructions for the Praxis skill.
-
-### `/praxis refine [pass]` (Standalone Refinement)
-**Purpose**: Run one or more refinement passes on an existing `knowledge_base.json` without re-ingesting raw sources. Useful when the user wants to improve the knowledge base incrementally.
-**Execution Flow**:
-1.  **Validate**: Confirm `.praxis/data/knowledge_base.json` exists. If not, tell the user to run `/praxis` first.
-2.  **Determine Scope**:
-    - If `[pass]` is specified (e.g., `/praxis refine 2`), run only that pass.
-    - If `[pass]` is `all` or omitted, run passes 0-5 in sequence.
-    - Valid pass numbers: `0` (Voice Extraction), `1` (Summary Audit), `2` (Bullet Strengthening), `3` (Skill Evidence Backfill), `4` (Distinction Mining), `5` (Spelling & Grammar).
-3.  **Execute**: Run the specified pass(es) as defined in the Refinement Protocol (see `/praxis` command, step 3). Each pass requires user approval before writing changes.
-4.  **Regenerate**: After approved changes are written, re-run `bash skills/praxis/scripts/draft.sh` to update `assets/Resume.md`.
-
-    After refinement, the newly generated resume MUST be subjected to adversarial review by the Logos and Pathos agents before finalization. This ensures that compliance, voice integrity, and impact remain consistent after incremental updates.
-
-**Examples**:
-- `/praxis refine` — Run all passes (0-5)
-- `/praxis refine 0` — Re-extract voice profile only
-- `/praxis refine 2` — Run bullet strengthening / quantification interview only
-- `/praxis refine 5` — Run spelling & grammar audit only
+- Keep the user informed during the Adversarial Loop so they know the agents are working.
