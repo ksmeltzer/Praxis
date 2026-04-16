@@ -94,3 +94,4 @@ mv -f *.txt *.csv *.zip *.pdf *.zip.zip *.tar.gz .praxis/sources/ 2>/dev/null ||
 
 echo "✅ Raw context gathered at $RAW_CONTEXT."
 echo "CRITICAL: The Orchestrator LLM MUST now natively read $RAW_CONTEXT, parse it using LLM cognition, fuzzy match roles, and write the structured JSON to .praxis/data/knowledge_base.json."
+echo "DATE FORMAT RULE: All experience dates MUST be 'Mon YYYY - Mon YYYY' (e.g., 'Jan 2015 - Jul 2025'). LinkedIn CSVs provide bare years — the LLM MUST infer months from context or default to 'Jan' for start dates and 'Dec' for end dates. Current roles use 'Present' as end date."

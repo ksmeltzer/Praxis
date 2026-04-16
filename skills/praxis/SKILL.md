@@ -203,6 +203,15 @@ The LLM MUST produce JSON conforming to this exact schema. Scripts (`draft.sh`, 
 6.  **Drafting Baseline Profiles**: Run `bash skills/praxis/scripts/draft.sh` to generate the ATS-compliant `assets/Resume.md`. The drafter treats `bullets` as a "pool of facts" and selects the 3-4 strongest for each role.
 7.  **Review**: Validate the generated markdown artifacts. If issues arise, fix the underlying scripts and re-run the pipeline.
 
+    **Step 8: Adversarial Baseline Review**
+    After `draft.sh` generates `assets/Resume.md`, the orchestrator MUST run a two-agent adversarial review:
+    1. **Logos (Auditor)**: Review the generated resume against `ATS_PARSER_RULES.md` for compliance defects (section headers, date formats, acronym expansions, duplicate skills, pronoun violations, spelling errors).
+    2. **Pathos (Drafter)**: Review for impact, voice authenticity, weak/filler bullets, poor front-loading, passive voice, buzzwords, and missed quantification opportunities.
+    3. Both agents produce categorized defect lists (BLOCKING / MAJOR / MINOR).
+    4. The orchestrator fixes all BLOCKING defects, addresses MAJOR defects where possible, and logs MINOR defects as beads for future sessions.
+    5. Regenerate `assets/Resume.md` via `draft.sh` after fixes are applied to the knowledge base.
+    6. If any BLOCKING defects remain after the second generation, repeat the review cycle (max 3 iterations).
+
     **CRITICAL**: Steps 6-7 MUST NOT execute until the Refinement Protocol (step 3) is complete and the user has approved all changes. The baseline draft is generated from the *refined* knowledge base, not the raw ingestion output. Generating a draft before refinement defeats the purpose of the refinement protocol — the draft would be built on unvalidated, unquantified, voice-unchecked data and would need to be thrown away.
 
 ### `/praxis history <fact>` (The Fact Logger)
@@ -296,6 +305,8 @@ TAILORING_GAPS: [list or "None"]
     - Valid pass numbers: `0` (Voice Extraction), `1` (Summary Audit), `2` (Bullet Strengthening), `3` (Skill Evidence Backfill), `4` (Distinction Mining), `5` (Spelling & Grammar).
 3.  **Execute**: Run the specified pass(es) as defined in the Refinement Protocol (see `/praxis` command, step 3). Each pass requires user approval before writing changes.
 4.  **Regenerate**: After approved changes are written, re-run `bash skills/praxis/scripts/draft.sh` to update `assets/Resume.md`.
+
+    After refinement, the newly generated resume MUST be subjected to adversarial review by the Logos and Pathos agents before finalization. This ensures that compliance, voice integrity, and impact remain consistent after incremental updates.
 
 **Examples**:
 - `/praxis refine` — Run all passes (0-5)

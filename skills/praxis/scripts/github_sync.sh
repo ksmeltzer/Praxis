@@ -61,7 +61,50 @@ jq --argjson repos "$REPOS_JSON" '
     }
   ] as $new_repos |
   .projects = ($existing + $new_repos)
-' "$KB_FILE" > "$tmp" && mv -f "$tmp" "$KB_FILE"
+# Fetch README for each project and add to 'readme' field
+PROJECTS=$(jq -r '.projects[] | @base64' "$KB_FILE")
+TOTAL_PROJECTS=$(echo "$PROJECTS" | wc -l)
+UPDATED_PROJECTS=0
+
+for project in $PROJECTS; do
+    PROJECT_JSON=$(echo "$project" | base64 --decode)
+    URL=$(echo "$PROJECT_JSON" | jq -r '.url')
+    EXISTING_README=$(echo "$PROJECT_JSON" | jq -r '.readme // empty')
+
+    if [[ ! $URL =~ github.com ]]; then
+        continue # Skip non-GitHub repos
+    fi
+
+    if [ -n "$EXISTING_README" ]; then
+        continue # Skip if a README already exists
+    fi
+
+    OWNER_REPO=$(echo "$URL" | grep -Po 'github.com/\K[^/]+/[^/]+' || true)
+    if [ -z "$OWNER_REPO" ]; then
+        echo "⚠️  Could not parse owner/repo from $URL. Skipping."
+        continue
+    fi
+
+    echo "🔄 Fetching README for $OWNER_REPO..."
+    README_CONTENT=$(gh api repos/$OWNER_REPO/readme --jq '.content' 2>/dev/null | base64 -d || true)
+
+    if [ -z "$README_CONTENT" ]; then
+        echo "⚠️  README fetch failed for $OWNER_REPO. Skipping."
+        continue
+    fi
+
+    UPDATED_PROJECTS=$((UPDATED_PROJECTS + 1))
+
+    # Update the field in the KB_FILE
+    tmp=$(mktemp)
+    jq --arg readme "$README_CONTENT" --arg name "$(echo "$PROJECT_JSON" | jq -r '.name')" '
+      .projects |= map(
+        if .name == $name then .readme = $readme else . end
+      )
+    ' "$KB_FILE" > "$tmp" && mv -f "$tmp" "$KB_FILE"
+done
+
+echo "✅ Fetched READMEs for $UPDATED_PROJECTS of $TOTAL_PROJECTS projects."
 
 NEW_COUNT=$(echo "" | jq --argjson repos "$REPOS_JSON" --slurpfile kb "$KB_FILE" '
   ($kb[0].projects | map(.name | ascii_downcase)) as $all |
