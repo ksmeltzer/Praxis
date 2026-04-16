@@ -60,11 +60,37 @@ append_csv "Recommendations_Received.csv"   "LINKEDIN RECOMMENDATIONS RECEIVED"
 append_csv "Rich_Media.csv"                 "LINKEDIN RICH MEDIA"
 append_csv "Languages.csv"                  "LINKEDIN LANGUAGES"
 
+# --- GitHub Account Export Extraction ---
+GH_EXPORT=$(ls *.tar.gz 2>/dev/null | head -n 1 || true)
+if [ -n "$GH_EXPORT" ] && [ -f "$GH_EXPORT" ]; then
+  GH_TMP=$(mktemp -d)
+  tar xzf "$GH_EXPORT" -C "$GH_TMP" --include='*.json' 2>/dev/null || true
+
+  append_json() {
+      local name="$1"
+      local header="$2"
+      local json_path
+      json_path=$(find "$GH_TMP" -name "$name" 2>/dev/null | head -n 1 || true)
+      if [ -n "$json_path" ] && [ -f "$json_path" ] && [ -s "$json_path" ]; then
+          echo -e "\n\n=== $header ===" >> "$RAW_CONTEXT"
+          cat "$json_path" >> "$RAW_CONTEXT"
+      fi
+  }
+
+  append_json "users_000001.json"           "GITHUB USER PROFILE"
+  append_json "repositories_000001.json"    "GITHUB REPOSITORIES"
+  append_json "pull_requests_000001.json"   "GITHUB PULL REQUESTS"
+  append_json "releases_000001.json"        "GITHUB RELEASES"
+  append_json "issue_events_000001.json"    "GITHUB ISSUE EVENTS"
+
+  rm -rf "$GH_TMP"
+fi
+
 # Clean up temp
 rm -rf "$TMP_DIR"
 
 # Move all source files into .praxis/sources/ to keep root clean
-mv -f *.txt *.csv *.zip *.pdf *.zip.zip .praxis/sources/ 2>/dev/null || true
+mv -f *.txt *.csv *.zip *.pdf *.zip.zip *.tar.gz .praxis/sources/ 2>/dev/null || true
 
 echo "✅ Raw context gathered at $RAW_CONTEXT."
 echo "CRITICAL: The Orchestrator LLM MUST now natively read $RAW_CONTEXT, parse it using LLM cognition, fuzzy match roles, and write the structured JSON to .praxis/data/knowledge_base.json."
