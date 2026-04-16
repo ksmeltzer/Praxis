@@ -21,6 +21,7 @@ knowledge_base.md
 Thumbs.db
 __pycache__/
 *.pyc
+.ruff_cache/
 
 # Local Config
 .env

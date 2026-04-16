@@ -54,7 +54,7 @@ gen_summary() {
 }
 
 gen_skills() {
-    echo "## Technical Skills"
+    echo "## Skills"
     # Render each category with its skills
     jq -r '.skills | to_entries[] | "**\(.key):** \(.value | join(", "))"' "$KB_FILE"
     echo ""
@@ -65,7 +65,7 @@ gen_distinctions() {
     patent_count=$(jq '(.patents // []) | length' "$KB_FILE" 2>/dev/null || echo "0")
     distinction_count=$(jq '(.distinctions // []) | length' "$KB_FILE" 2>/dev/null || echo "0")
     if [ "$patent_count" -gt 0 ] || [ "$distinction_count" -gt 0 ]; then
-        echo "## Distinctions"
+        echo "## Awards & Patents"
         jq -r '(.patents // [])[] | "- **Patent \(.issuer)**: \(.title) — \(.description)\(if .url then " [View](\(.url))" else "" end)"' "$KB_FILE"
         jq -r '(.distinctions // [])[] | "- \(.title)"' "$KB_FILE"
         echo ""
@@ -118,7 +118,7 @@ gen_projects() {
     local count
     count=$(jq '(.projects // []) | length' "$KB_FILE" 2>/dev/null || echo "0")
     if [ "$count" -gt 0 ]; then
-        echo "## Open Source Projects"
+        echo "## Projects"
         jq -r '(.projects // [])[] | "- **[\(.name)](\(.url // "#"))**: \(.description)\(if .dates then " (" + .dates + ")" else "" end)"' "$KB_FILE"
         echo ""
     fi
