@@ -64,7 +64,7 @@ append_csv "Languages.csv"                  "LINKEDIN LANGUAGES"
 GH_EXPORT=$(ls *.tar.gz 2>/dev/null | head -n 1 || true)
 if [ -n "$GH_EXPORT" ] && [ -f "$GH_EXPORT" ]; then
   GH_TMP=$(mktemp -d)
-  tar xzf "$GH_EXPORT" -C "$GH_TMP" --include='*.json' 2>/dev/null || true
+  tar xzf "$GH_EXPORT" -C "$GH_TMP" --wildcards '*.json' 2>/dev/null || true
 
   append_json() {
       local name="$1"
