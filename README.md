@@ -35,7 +35,7 @@ Praxis installs directly into your local CLI environment (e.g., `opencode` or `s
 
 ### 2. The Fact Logger: `/praxis history <fact>`
 *   **What it does:** Quickly appends a specific accomplishment, metric, or bullet point to an existing role without requiring a full CV re-upload.
-*   **How it works:** You run `/praxis history at DexCare, I managed a team of 50`. Praxis parses the company, locates it in `knowledge_base.json`, and appends the fact to that role's `bullets` array (the "fact pool"), automatically regenerating your baseline resumes.
+*   **How it works:** You run `/praxis history at ACME co., I managed a team of 50`. Praxis parses the company, locates it in `knowledge_base.json`, and appends the fact to that role's `bullets` array (the "fact pool"), automatically regenerating your baseline resumes.
 
 ### 3. The Skill Enricher: `/praxis skill <skill_name> <description>`
 *   **What it does:** Replaces generic, scraped LinkedIn skills (e.g., "Kubernetes") with concrete contextual evidence of *how* you used that skill.
