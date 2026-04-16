@@ -71,6 +71,12 @@ The LLM MUST produce JSON conforming to this exact schema. Scripts (`draft.sh`, 
       "issued_on": "string (optional)"
     }
   ],
+  "distinctions": [
+    {
+      "title": "string — short description of the achievement",
+      "source": "string — which company/role/recommendation this was extracted from"
+    }
+  ],
   "skills": {
     "Category Name": ["string — skill names within this category"]
   },
@@ -143,10 +149,31 @@ The LLM MUST produce JSON conforming to this exact schema. Scripts (`draft.sh`, 
     - Passive voice or vague language ("responsible for", "worked on", "helped with")
     - Missing metrics or quantifiable impact ("saved money", "reduced costs", "improved performance" without numbers)
     - Unspecific scale ("large team", "many clients", "significant reduction")
+    - First-person pronouns ("I designed", "my team") — rewrite to implied first person per Section 13 of ATS_PARSER_RULES.md
+    - Role descriptions masquerading as accomplishments ("Full stack development utilizing...")
+    - Technology dumps with no context ("Extensive use of Kubernetes, RabbitMQ...")
+    - Near-duplicate bullets that should be merged
     - Opportunities to rewrite using STAR method (Situation, Task, Action, Result)
-    - **CRITICAL**: When the LLM identifies a bullet that *implies* a metric but doesn't state one, it MUST ask the user directly as an expert interviewer: *"Your bullet says 'reduced duplicate patient records rate' — do you have the actual percentage? Even a rough estimate like 'from ~8% to under 1%' transforms this from a claim to proof."* Collect the answer and rewrite the bullet immediately.
-    - When the LLM finds a metric elsewhere in the data that could strengthen a bullet (e.g., a recommendation mentions a specific result), cross-reference it and propose the enriched version.
-    - Present ALL proposed rewrites grouped by company for approval. Never invent metrics — if the user can't provide a number, leave the bullet as-is or note it for future enrichment.
+
+    **CRITICAL — One-at-a-Time Presentation**: Do NOT present all issues as a batch. Present ONE bullet at a time using this format:
+
+    ```
+    **[Company Name]** — Bullet [N] of [Total flagged]
+
+    > [The exact current bullet text]
+
+    **Issue**: [What's wrong — vague metric, passive voice, missing scale, etc.]
+    **Question**: [The specific question to ask the user, framed as an expert interviewer]
+    ```
+
+    Wait for the user's answer. If they provide a metric or context, immediately propose a rewrite for approval. If they say they don't have a number, acknowledge it and move on — never invent metrics. Then present the next bullet.
+
+    This one-at-a-time approach is mandatory because:
+    - Users give better, more thoughtful answers when focused on a single item
+    - It avoids overwhelming the user with a wall of questions
+    - Each answer may inform subsequent rewrites (e.g., a scale number for one bullet may apply to others at the same company)
+
+    When the LLM finds a metric elsewhere in the data that could strengthen a bullet (e.g., a recommendation mentions a specific result), cross-reference it and propose the enriched version proactively — don't make the user remember what their own recommenders said about them.
 
     **Pass 3 — Skill Evidence Backfill**: For every skill still marked `["Identified via input"]`:
     - Search all `experience[].bullets`, role descriptions, and project descriptions for contextual evidence
@@ -166,7 +193,8 @@ The LLM MUST produce JSON conforming to this exact schema. Scripts (`draft.sh`, 
     - Correct spelling of technology names, company names, and proper nouns (e.g., "PostgreSQL" not "Postgresql", "Kubernetes" not "Kuberentes")
     - Fix grammar: tense consistency, subject-verb agreement, dangling modifiers
     - Fix punctuation: consistent bullet endings, correct dash usage
-    - Present all corrections to the user for approval — never silently rewrite. Errors in the knowledge base propagate to every generated resume, so this pass is non-optional.
+    - **CRITICAL**: Spelling and grammar corrections are objective errors — do NOT prompt the user for approval on these. Fix them silently and report what was changed after the fact. The user's time should not be spent confirming that "Principle" should be "Principal" or that "overlayed" should be "overlaid". Just fix it.
+    - Only prompt the user when a correction changes the MEANING of a bullet, not when it fixes an obvious error.
 
     After all passes are complete and the user has approved changes, write the updated `knowledge_base.json`.
 

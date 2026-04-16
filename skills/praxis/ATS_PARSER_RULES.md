@@ -94,3 +94,9 @@ This document outlines the research-backed guidelines that `praxis-pathos` (Draf
 *   **Rule:** **Experience-First Ordering.** Always place Work Experience before Education unless the candidate is entry-level with no relevant experience.
 *   **Rule:** **Certifications as Degree Equivalents.** When a candidate lacks a traditional degree, prominently feature certifications and portfolio projects. These are not consolation prizes — 82% of hiring managers view them as equivalent.
 *   **Rule:** **GitHub/Portfolio as Proof.** For technical roles, link to the candidate's GitHub or portfolio. 76% of hiring managers say self-taught skills with proof outweigh formal education.
+
+## 13. First-Person Pronoun Prohibition
+**Research Fact:** Resume convention universally expects implied first person ("Designed the system") rather than explicit first person ("I designed the system"). First-person pronouns waste space, are redundant (it's your resume — "I" is implied), and read as informal or unseasoned to hiring managers. ATS parsers strip pronouns as noise, adding zero keyword value.
+*   **Rule:** **No First-Person Pronouns.** Never use "I", "me", "my", "we", or "our" in any generated resume text — bullets, summaries, or section content. All sentences must use implied first person.
+*   **Rule:** **Source Data Rewriting.** During the Refinement Protocol, if `knowledge_base.json` contains bullets or summaries written in explicit first person (common when imported from LinkedIn), `praxis-logos` must flag them and propose rewrites that drop the pronoun while preserving meaning.
+*   **Rule:** **Drafter Enforcement.** `praxis-pathos` must never draft a sentence beginning with or containing a first-person pronoun. `praxis-logos` must reject any draft containing first-person pronouns as a blocking defect equal in severity to a spelling error.
