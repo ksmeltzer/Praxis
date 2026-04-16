@@ -1,3 +1,8 @@
+---
+name: praxis
+description: "Adversarial, Multi-Agent Career Knowledge Base & Resume Pipeline. Usage: /praxis build, /praxis customize <url>, /praxis help"
+trigger: /praxis
+---
 # Praxis Skill
 
 This skill implements the orchestrator logic for the Praxis adversarial resume builder.
