@@ -185,13 +185,13 @@ The LLM MUST produce JSON conforming to this exact schema. Scripts (`draft.sh`, 
 3.  **Regenerate Profiles**: Rerun `bash skills/praxis/scripts/draft.sh`.
 
 ### `/praxis skill <skill_name> <description>` (The Skill Enricher)
-**Purpose**: Add a new technical skill or enrich an existing one with concrete contextual evidence, replacing generic placeholder text like "Identified via input".
+**Purpose**: Add a new technical skill or enrich an existing one with concrete contextual evidence.
 **Execution Flow**:
 1.  **Parse**: Extract the `<skill_name>` and the `<description>` from the input (e.g., `/praxis skill Kubernetes Architected multi-region cluster...`).
-2.  **Enrich Database**: Run `bash skills/praxis/scripts/skill.sh "<skill_name>" "<description>"` which locates `skills` (where keys are skill names and values are arrays of context strings).
-    * If the skill exists and the array contains exactly `["Identified via input"]`, replace the array completely with `[<description>]`.
-    * If the skill exists with real descriptions, push the new `<description>` to the array.
-    * If the skill doesn't exist, create it with the key `<skill_name>` and the array value `[<description>]`.
+2.  **Enrich Database**: Run `bash skills/praxis/scripts/skill.sh "<skill_name>" "<description>"` which:
+    * Searches all skill categories for a case-insensitive match on the skill name.
+    * If the skill doesn't exist in any category, adds it to the "Other" category.
+    * Stores the `<description>` as contextual evidence in a `skill_evidence` object (keyed by skill name, values are arrays of evidence strings).
 3.  **Regenerate Profiles**: Rerun `bash skills/praxis/scripts/draft.sh`.
 
 ### `/praxis gen <job-description-url>` (The Forge)

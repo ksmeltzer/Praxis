@@ -40,7 +40,11 @@ CONTACT_PARTS=()
 [ -n "$EMAIL" ] && CONTACT_PARTS+=("Email: $EMAIL")
 [ -n "$LINKEDIN" ] && CONTACT_PARTS+=("LinkedIn: $LINKEDIN")
 [ -n "$GITHUB" ] && CONTACT_PARTS+=("GitHub: $GITHUB")
-CONTACT_LINE=$(IFS=' | '; echo "${CONTACT_PARTS[*]}")
+CONTACT_LINE=""
+for i in "${!CONTACT_PARTS[@]}"; do
+    [ "$i" -gt 0 ] && CONTACT_LINE+=" | "
+    CONTACT_LINE+="${CONTACT_PARTS[$i]}"
+done
 
 # --- Section generators ---
 gen_summary() {

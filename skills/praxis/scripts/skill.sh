@@ -15,19 +15,28 @@ if [ ! -f "$DB" ]; then
     exit 1
 fi
 
+# Check if skill already exists in any category
+FOUND_CATEGORY=$(jq -r --arg skill "$SKILL" '
+  .skills | to_entries[] |
+  select(.value | map(ascii_downcase) | index($skill | ascii_downcase)) |
+  .key
+' "$DB" | head -n 1)
+
+if [ -n "$FOUND_CATEGORY" ]; then
+    echo "Skill '$SKILL' already exists in category '$FOUND_CATEGORY'."
+else
+    # Add to "Other" category (create it if needed)
+    tmp=$(mktemp)
+    jq --arg skill "$SKILL" '
+      .skills.Other = ((.skills.Other // []) + [$skill] | unique)
+    ' "$DB" > "$tmp" && mv -f "$tmp" "$DB"
+    echo "Added '$SKILL' to 'Other' skills category."
+fi
+
+# Store evidence in skill_evidence object
 tmp=$(mktemp)
 jq --arg skill "$SKILL" --arg desc "$DESC" '
-  .skills |= (
-    if has($skill) then
-      if (.[$skill] | length == 1) and .[$skill][0] == "Identified via input" then
-        .[$skill] = [$desc]
-      else
-        .[$skill] += [$desc]
-      end
-    else
-      .[$skill] = [$desc]
-    end
-  )
-' "$DB" > "$tmp" && mv "$tmp" "$DB"
+  .skill_evidence[$skill] = ((.skill_evidence[$skill] // []) + [$desc])
+' "$DB" > "$tmp" && mv -f "$tmp" "$DB"
 
-echo "✅ Added/Updated skill $SKILL with new context."
+echo "✅ Added context for '$SKILL': $DESC"
