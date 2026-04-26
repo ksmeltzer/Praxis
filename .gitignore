@@ -26,6 +26,7 @@ __pycache__/
 # Testing & Framework Environments
 .neuroplasticity/
 launch-config.json
+.claude/settings.json
 
 # Local Config
 .env
