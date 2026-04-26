@@ -65,9 +65,8 @@ gen_summary() {
 
 gen_skills() {
     echo "## Skills"
-    # Render each category with its skills
-    jq -r '.skills | to_entries[] | "**\(.key):** \(.value | join(", "))"' "$KB_FILE"
-    echo ""
+    # Render each category with its skills and an empty line between categories
+    jq -r '.skills | to_entries[] | "**\(.key):** \(.value | join(", "))\n"' "$KB_FILE"
 }
 
 gen_distinctions() {
