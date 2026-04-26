@@ -261,11 +261,12 @@ Praxis uses a single command with three modes. The orchestrator dispatches based
 
 ### Mode 4: Generate Baseline (`/praxis resume`)
 
-**Purpose**: Explicitly regenerate the general baseline resume (`assets/Resume.md`) entirely via LLM generation without relying on ad-hoc shell scripts.
+**Purpose**: Explicitly regenerate the general baseline resume (`assets/Resume.md`) and the LinkedIn Profile template (`assets/LinkedIn_Profile.md`) entirely via LLM generation without relying on ad-hoc shell scripts.
 
 **Execution Flow**:
-1. Invoke `praxis-pathos` with the full `knowledge_base.json` and `ATS_PARSER_RULES.md`. The LLM agent MUST construct the complete Markdown string itself based on the strict formatting rules and output template. Do NOT execute a bash script.
-2. Present the updated document to the user.
+1. Invoke `praxis-pathos` with the full `knowledge_base.json` and `ATS_PARSER_RULES.md`. The LLM agent MUST construct the complete Markdown string for the baseline resume (`assets/Resume.md`) itself based on the strict formatting rules and output template. Do NOT execute a bash script.
+2. Invoke `praxis-pathos` to generate a dedicated LinkedIn profile template (`assets/LinkedIn_Profile.md`). This file MUST be written in the first person, optimized for LinkedIn's character limits (e.g., 220-char headlines), and include easy-to-copy sections for the "About", "Experience" (with top 5 skills to tag per role), and a comma-separated list for the "Skills" section.
+3. Present the updated documents to the user.
 
 ---
 
