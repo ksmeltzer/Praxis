@@ -35,8 +35,8 @@ Simply provide a job description URL (`/praxis gen <job-url>`), and Praxis will 
 Beyond just getting the interview, Praxis helps you pass it. For every targeted resume generated, Praxis builds a comprehensive **Interview Guideline & Prep Sheet**. This document explicitly maps your past experience and metrics directly to the requirements in the job description, serving as a rapid orientation brief to remind you exactly how you align with the role when the recruiter calls months later.
 
 ### 5. 📂 Context-Preserving Organization
-*"Which version of my resume did I send to Unstructured again?"* 
-Praxis automatically organizes your generated resumes, tailored cover letters, and Interview Prep Sheets into dedicated company folders (e.g., `assets/Unstructured/`). When a recruiter calls you back a month later, you can instantly pull up the folder to see exactly what the job description was, what resume you sent, and the mapped talking points.
+*"Which version of my resume did I send to AcmeCorp again?"* 
+Praxis automatically organizes your generated resumes, tailored cover letters, and Interview Prep Sheets into dedicated company folders (e.g., `assets/AcmeCorp/`). When a recruiter calls you back a month later, you can instantly pull up the folder to see exactly what the job description was, what resume you sent, and the mapped talking points.
 
 ---
 
