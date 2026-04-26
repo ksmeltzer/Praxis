@@ -42,7 +42,7 @@ Praxis automatically organizes your generated resumes, tailored cover letters, a
 
 ## 🏗️ Architecture & Commands
 
-Praxis installs directly into your local CLI environment (e.g., `opencode`) as a skill.
+Praxis installs directly into your local AI CLI environment (e.g., `opencode`, `Claude Code`, `GitHub Copilot`) as a skill.
 
 ### The Intake Engine: `/praxis`
 Runs a deterministic Deep Harvest extraction across your root directory for raw exports, parsing data into fact pools and pushing it into your Knowledge Base. It then drafts baseline profiles utilizing a "Discrete Chronological Strategy."
