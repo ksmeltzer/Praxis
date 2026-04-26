@@ -15,7 +15,7 @@ This skill implements the orchestrator logic for the Praxis adversarial resume b
 
 ## Knowledge Base Schema (`knowledge_base.json`)
 
-The LLM MUST produce JSON conforming to this exact schema. Scripts (`draft.sh`, `github_sync.sh`) depend on these key names.
+The LLM MUST produce JSON conforming to this exact schema. The generating agents depend on these key names.
 
 ```json
 {
@@ -114,7 +114,7 @@ The LLM MUST produce JSON conforming to this exact schema. Scripts (`draft.sh`, 
 - `experience[].bullets` is the exhaustive "fact pool". Merge bullets from ALL sources (PDF resume, LinkedIn positions, text files). Prefer the most detailed version of a bullet when duplicates exist.
 - `patents` captures patent filings. Extract from both the resume text AND LinkedIn Patents CSV.
 - `education` and `certifications` are separate arrays. Extract from PDF resume text AND LinkedIn Education CSV.
-- `projects` is populated by `github_sync.sh` — leave it as `[]` during LLM parsing.
+- `projects` is populated by autonomously fetching GitHub repository data.
 - `skills` is a categorized object where keys are category names (e.g. "AI & Machine Learning") and values are arrays of skill name strings. **CRITICAL:** Do not categorize runtimes, frameworks, or environments (like Node.js, React, Kubernetes) under "Languages". "Languages" MUST only contain actual programming languages (e.g., JavaScript, TypeScript, Python). Runtimes/frameworks should go into a "Frameworks & Libraries" or similar category. **FRAMEWORK ECOSYSTEM RULE:** When organizing frameworks, group related tools into their overarching ecosystem instead of scattering them as standalone items. Use the format `Ecosystem Name (Tool1, Tool2, Tool3)`. For example, `"React Ecosystem (Next.js, xState, Tailwind)"` or `"Node Ecosystem (Express, NestJS, Vite)"`. Furthermore, separate Security/Infrastructure tools (e.g., Open Policy Agent) from AI or conceptual architecture categories.
 - `industry_expertise` is a categorized object for non-technical domain knowledge and industry-specific skills. **INDUSTRY SPECIFIC SKILLS:** If a skill is heavily specialized to a particular industry (e.g., Epic for Healthcare, FIX Protocol for Finance, Global Reservation Engines for Hospitality), agents MUST categorize it inside `industry_expertise` using the industry name as the key (e.g., `"Healthcare"`, `"Travel & Hospitality"`).
 - `recommendations` captures LinkedIn recommendations verbatim — useful for voice profiling and distinction mining.
@@ -140,9 +140,9 @@ Praxis uses a single command with three modes. The orchestrator dispatches based
 
 **Execution Flow**:
 
-1. **Ingest**: Run `bash skills/praxis/scripts/ingest.sh`. Extracts text from PDF resumes, collects `*.txt` files, and extracts ALL relevant CSVs from LinkedIn ZIP exports. Everything is concatenated into `.praxis/sources/raw_context.txt`.
+1. **Ingest**: The Orchestrator MUST use its available tools (`bash`, `read`, `glob`) to autonomously extract text from raw source files located in `.praxis/sources/`. This includes reading `*.txt` files, extracting CSVs from LinkedIn ZIP exports, and converting `.pdf` resumes using `pdftotext` or Python equivalents. Aggregate the raw context in memory or a temporary file.
 
-2. **LLM-Native Parsing**: The Orchestrator MUST read `.praxis/sources/raw_context.txt` and use LLM cognition to:
+2. **LLM-Native Parsing**: The Orchestrator MUST use LLM cognition on the extracted raw text to:
     - Fuzzy-match and merge identical roles (e.g., "The Lowbush Company" vs "Lowbush Company")
     - Resolve date discrepancies — prefer the most specific dates
     - **DATE FORMAT RULE**: All experience dates MUST be `Mon YYYY - Mon YYYY` (e.g., `Jan 2015 - Jul 2025`). LinkedIn CSVs provide bare years — default to `Jan` for start dates and `Dec` for end dates. Current roles use `Present` as end date.
@@ -203,9 +203,9 @@ Praxis uses a single command with three modes. The orchestrator dispatches based
 
     **Pass 6 — Spelling & Grammar Audit**: Fix all spelling, grammar, and punctuation errors silently. Report what was changed after the fact. Only prompt when a correction changes meaning.
 
-4. **GitHub Sync**: Run `bash skills/praxis/scripts/github_sync.sh` to fetch public repos and READMEs.
+4. **GitHub Sync**: Use the `bash` tool with `gh` CLI (if available) or generic web fetching to pull the user's public repositories, descriptions, languages, and star counts. Update the `projects` array in the `knowledge_base.json`.
 
-5. **Baseline Draft**: Run `bash skills/praxis/scripts/draft.sh` to generate `assets/Resume.md`.
+5. **Baseline Draft**: Invoke `praxis-pathos` to explicitly regenerate the general baseline resume (`assets/Resume.md`) entirely via LLM generation based on the strict formatting rules and output template. Do NOT rely on bash scripts to generate the file.
 
     **CRITICAL**: Draft MUST NOT generate until refinement is complete and user-approved.
 
@@ -261,7 +261,7 @@ Praxis uses a single command with three modes. The orchestrator dispatches based
 **Purpose**: Explicitly regenerate the general baseline resume (`assets/Resume.md`) entirely via LLM generation without relying on ad-hoc shell scripts.
 
 **Execution Flow**:
-1. Invoke `praxis-pathos` with the full `knowledge_base.json` and `ATS_PARSER_RULES.md`. The LLM agent MUST construct the complete Markdown string itself based on the strict formatting rules and output template. Do NOT execute `bash draft.sh`.
+1. Invoke `praxis-pathos` with the full `knowledge_base.json` and `ATS_PARSER_RULES.md`. The LLM agent MUST construct the complete Markdown string itself based on the strict formatting rules and output template. Do NOT execute a bash script.
 2. Present the updated document to the user.
 
 ---
@@ -358,7 +358,7 @@ DIRECTIVE_VIOLATIONS: [list or "None"]
     - **Phase 2 (Audit)**: Invoke `praxis-logos` with the draft, FULL `knowledge_base.json`, `voice_profile`, and `ATS_PARSER_RULES.md`.
     - **Phase 3 (Iterate)**: If `REJECTED`, feed issues back to pathos. If not approved by iteration 3, present remaining issues to user.
 7. **Output**: Create a directory for the target company (`assets/{TargetCompany}/`). Save the tailored Markdown resume to `assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Resume.md`. (CRITICAL: `{TargetCompany}` MUST be the actual name of the company from the target job req, e.g., `Microsoft`).
-8. **Generate PDF**: Run `bash skills/praxis/scripts/gen_pdf.sh "assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Resume.md" "assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Resume.pdf"`. DO NOT delete the Markdown file; leave it for the user to edit manually if desired.
+8. **Generate PDF**: Run `npx md-to-pdf "assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Resume.md"` (if available in the environment) or use `pandoc` to convert the markdown to PDF. DO NOT delete the Markdown file; leave it for the user to edit manually if desired.
 9. **Interview Prep Sheet**: Generate `assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Interview_Prep.md`:
     - **Role Overview**: Company, title, seniority, team/department
     - **Your Story Arc**: 60-second elevator pitch tailored to the role
