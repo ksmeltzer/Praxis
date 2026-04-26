@@ -283,6 +283,7 @@ Senior resume strategist who writes in the applicant's authentic voice. MUST:
 - Select 3-4 strongest bullets per role, rewriting to emphasize JD-relevant impact. You MAY weave in technologies from that role's `skills_used` array if the JD requires them, even if the base KB bullet doesn't explicitly name them.
 - Follow ALL rules in `ATS_PARSER_RULES.md`
 - **STRICT SKILLS FORMATTING**: The generated resume MUST NEVER list runtimes, frameworks, or environments (e.g., Node.js, React, Next.js, Kubernetes) under a "Languages" category. Only list actual programming languages (e.g., JavaScript, TypeScript, Python) under "Languages". You MUST use the `Ecosystem Name (Tool1, Tool2, Tool3)` format for frameworks and libraries in the skills section (e.g., `Node Ecosystem (Express, NestJS)`, `React Ecosystem (Next.js, Tailwind)`). MUST add an empty line break between each skill category to improve readability.
+- **INDUSTRY EXPERTISE SECTION**: You MUST generate a separate `## Industry Expertise` section below `## Technical Skills` to list domain-specific non-technical knowledge. Only include industries from the KB's `industry_expertise` object that are directly relevant to the target job.
 - **CONTACT LINE FORMATTING**: The contact line MUST include all portfolio links defined in the knowledge base `basics.portfolio_links` array (e.g., GitHub, Cognilogical). Do not drop them.
 - Front-load summary and most recent role on page one
 - Always include a "Points of Note" section to highlight patents, awards, or distinctions if any exist in the provided knowledge base
