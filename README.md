@@ -72,11 +72,9 @@ graph LR
 # Clone the repository
 git clone git@github.com:ksmeltzer/Praxis.git
 cd Praxis
-
-# Install the agents, skills, and commands to your local environment
-chmod +x install.sh
-./install.sh
 ```
+
+To install Praxis, follow your specific AI Agent Harness (e.g., `opencode`, `Claude Code`, or `GitHub Copilot`) tool's guide for installing local agents, skills, and custom commands from a project directory.
 
 ## 🔒 Privacy & Security
 
