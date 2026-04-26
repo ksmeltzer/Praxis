@@ -58,7 +58,7 @@ The LLM MUST produce JSON conforming to this exact schema. Scripts (`draft.sh`, 
       "degree": "string (e.g. Bachelors of Science)",
       "major": "string",
       "minor": "string (optional)",
-      "dates": "string (e.g. '1999 - 2006')"
+      "dates": "string (e.g. '2006' — graduation year only. DO NOT include start year)"
     }
   ],
   "certifications": [
