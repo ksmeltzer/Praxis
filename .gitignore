@@ -25,7 +25,6 @@ __pycache__/
 
 # Testing & Framework Environments
 .neuroplasticity/
-.opencode/
 launch-config.json
 
 # Local Config
