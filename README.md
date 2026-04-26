@@ -32,7 +32,7 @@ When tailoring an ATS-friendly resume for a specific job description, Praxis emp
 Simply provide a job description URL (`/praxis gen <job-url>`), and Praxis will run a Skill Gap Analysis. It strategically selects the most relevant facts from your history (rather than dumping your whole resume) to generate a highly targeted, ATS-optimized PDF designed specifically to beat the bots for that exact role.
 
 ### 4. 🎤 Automated Interview Prep Sheets
-Beyond just getting the interview, Praxis helps you pass it. For every targeted resume generated, Praxis builds a comprehensive **Interview Guideline & Prep Sheet**. This document explicitly maps your past experience and metrics directly to the requirements in the job description, giving you a customized cheat sheet for your behavioral and technical rounds.
+Beyond just getting the interview, Praxis helps you pass it. For every targeted resume generated, Praxis builds a comprehensive **Interview Guideline & Prep Sheet**. This document explicitly maps your past experience and metrics directly to the requirements in the job description, serving as a rapid orientation brief to remind you exactly how you align with the role when the recruiter calls months later.
 
 ### 5. 📂 Context-Preserving Organization
 *"Which version of my resume did I send to Unstructured again?"* 
