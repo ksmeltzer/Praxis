@@ -64,9 +64,18 @@ gen_summary() {
 }
 
 gen_skills() {
-    echo "## Skills"
+    echo "## Technical Skills"
     # Render each category with its skills and an empty line between categories
     jq -r '.skills | to_entries[] | "**\(.key):** \(.value | join(", "))\n"' "$KB_FILE"
+}
+
+gen_industry_expertise() {
+    local count
+    count=$(jq '(.industry_expertise // {}) | length' "$KB_FILE" 2>/dev/null || echo "0")
+    if [ "$count" -gt 0 ]; then
+        echo "## Industry Expertise"
+        jq -r '.industry_expertise | to_entries[] | "**\(.key):** \(.value | join(", "))\n"' "$KB_FILE"
+    fi
 }
 
 gen_distinctions() {
@@ -141,11 +150,12 @@ gen_projects() {
     echo "*${HEADLINE}*"
     echo ""
 
-    DEFAULT_ORDER="summary skills distinctions experience education certifications projects"
+    DEFAULT_ORDER="summary industry_expertise skills distinctions experience education certifications projects"
 
     for section in $DEFAULT_ORDER; do
         case "$section" in
             summary) gen_summary ;;
+            industry_expertise) gen_industry_expertise ;;
             skills) gen_skills ;;
             distinctions) gen_distinctions ;;
             experience) gen_experience ;;
