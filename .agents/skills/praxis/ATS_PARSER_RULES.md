@@ -10,7 +10,8 @@ This document outlines the research-backed guidelines that `praxis-pathos` (Draf
 ## 2. The "Zero Experience" Bug (Regex Failures)
 **Research Fact:** Parsers calculate total years of experience using regular expressions (Regex) targeting section headers and date formats. If the Regex fails, the candidate is automatically binned for "lack of experience."
 *   **Rule:** **Standardized Section Headers Only.** You must use exact, standard strings: `Experience`, `Education`, `Skills`, `Projects`. Do NOT use creative headers like "My Journey", "Professional History", or "What I've Built". The parser will fail to find the section.
-*   **Rule:** **Strict Chronological Date Formatting.** Dates must follow `Month YYYY - Month YYYY` (e.g., `Jan 2020 - Dec 2023`) or `MM/YYYY - MM/YYYY`. Do not use seasons ("Summer 2021") or bare years ("2020 - 2023") as some ATS systems default to January 1st, shortchanging the candidate's experience calculation.
+*   **Rule:** **Strict Chronological Date Formatting.** Experience dates must follow `Month YYYY - Month YYYY` (e.g., `Jan 2020 - Dec 2023`) or `MM/YYYY - MM/YYYY`. Do not use seasons ("Summer 2021") or bare years ("2020 - 2023") as some ATS systems default to January 1st, shortchanging the candidate's experience calculation.
+*   **Rule:** **Education Date Formatting.** Education dates must ONLY output the graduation/completion year (e.g., "2006" or "May 2006"). DO NOT include the start year or date ranges for degrees on the final output resume.
 
 ## 3. The Keyword Disconnect (Lexical vs. Semantic Search)
 **Research Fact:** While modern ATS (Greenhouse) uses semantic search, enterprise legacy systems still use exact-match Boolean queries.

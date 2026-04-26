@@ -100,7 +100,7 @@ gen_experience() {
 
 gen_education() {
     echo "## Education"
-    jq -r '(.education // [])[] | "### \(.school)\n**\(.degree)**\(if .major then " — " + .major else "" end)\(if .minor then " (Minor: " + .minor + ")" else "" end)\(if .dates then " | " + .dates else "" end)\n"' "$KB_FILE" 2>/dev/null || echo "_None recorded._"
+    jq -r '(.education // [])[] | "### \(.school)\n**\(.degree)**\(if .major then " — " + .major else "" end)\(if .minor then " (Minor: " + .minor + ")" else "" end)\(if .dates then " | " + (.dates | split("-") | last | sub("^ +"; "")) else "" end)\n"' "$KB_FILE" 2>/dev/null || echo "_None recorded._"
     echo ""
 }
 
