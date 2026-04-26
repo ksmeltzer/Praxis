@@ -362,7 +362,7 @@ DIRECTIVE_VIOLATIONS: [list or "None"]
     - **Phase 2 (Audit)**: Invoke `praxis-logos` with the draft, FULL `knowledge_base.json`, `voice_profile`, and `ATS_PARSER_RULES.md`.
     - **Phase 3 (Iterate)**: If `REJECTED`, feed issues back to pathos. If not approved by iteration 3, present remaining issues to user.
 7. **Output**: Create a directory for the target company (`assets/{TargetCompany}/`). Save the tailored Markdown resume to `assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Resume.md`. (CRITICAL: `{TargetCompany}` MUST be the actual name of the company from the target job req, e.g., `Microsoft`).
-8. **Generate PDF**: Run `npx md-to-pdf "assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Resume.md"` (if available in the environment) or use `pandoc` to convert the markdown to PDF. DO NOT delete the Markdown file; leave it for the user to edit manually if desired.
+8. **Generate PDF**: Run `npx md-to-pdf "assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Resume.md" --stylesheet .agents/skills/praxis/resume.css --config-file scripts/mdpdf.config.js` (if available in the environment) or use `pandoc` to convert the markdown to PDF. DO NOT delete the Markdown file; leave it for the user to edit manually if desired.
 9. **Interview Prep Sheet**: Generate `assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Interview_Prep.md`:
     - **Role Overview**: Company, title, seniority, team/department
     - **Your Story Arc**: 60-second elevator pitch tailored to the role
