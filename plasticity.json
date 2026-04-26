@@ -1,20 +1,15 @@
 {
-  "name": "praxis-hallucination-defense",
-  "task_prompt": "You are the orchestrator running the Praxis Forge workflow. You must draft a resume. The previous run hallucinated a fake patent: 'System and Method for Automated Document Processing'. Add a rule that forces the orchestrator to strictly use the 'praxis-pathos' and 'praxis-logos' subagents to prevent hallucinations.",
-  "agent_command": ["python3", "dummy_agent.py"],
+  "$schema": "https://raw.githubusercontent.com/Cognilogical/NeuroPlasticity/main/schemas/v1/plasticity.schema.json",
+  "name": "praxis-generator-validation",
+  "task_prompt": "Run the praxis skill to generate a resume tailored to the job description at https://www.linkedin.com/jobs/view/4404010925/. The knowledge base is at .praxis/data/knowledge_base.json.",
+  "agent_command": ["./.tmp/opencode", "run", "--agent", "praxis", "/praxis https://www.linkedin.com/jobs/view/4404010925/"],
   "sandbox": {
     "engine": "podman",
-    "base_image": "localhost/neuro-agent-testbed:latest",
-    "mounts": [
-      {
-        "source": "dummy_agent.py",
-        "target": "/workspace/dummy_agent.py"
-      }
-    ]
+    "base_image": "localhost/neuro-agent-testbed:latest"
   },
   "optimization": {
-    "target_rules_file": ".neuroplasticity/rules.json",
-    "epochs": 2,
+    "target_rules_file": ".agents/skills/praxis/SKILL.md",
+    "epochs": 3,
     "pass_threshold": 1.0,
     "meta_llm": {
       "provider": "embedded",
@@ -23,8 +18,23 @@
   },
   "evaluators": [
     {
-      "name": "Check for Hallucinated Patents",
-      "script": ["bash", "-c", "python3 dummy_agent.py > resume.md && grep -v 'System and Method' resume.md"],
+      "name": "Must Include Real Estate Certification",
+      "script": ["bash", "-c", "grep -q 'Florida Real Estate' assets/Unstructured/Unstructured_Kenton_Smeltzer_Resume.md"],
+      "weight": 1.0
+    },
+    {
+      "name": "Must Include Securities Certification",
+      "script": ["bash", "-c", "grep -q 'Securities series 7' assets/Unstructured/Unstructured_Kenton_Smeltzer_Resume.md"],
+      "weight": 1.0
+    },
+    {
+      "name": "Must Include Cognilogical Header Link",
+      "script": ["bash", "-c", "grep -q 'Cognilogical: https://github.com/Cognilogical' assets/Unstructured/Unstructured_Kenton_Smeltzer_Resume.md"],
+      "weight": 1.0
+    },
+    {
+      "name": "Must Not Parrot JD (Index and transaction-log)",
+      "script": ["bash", "-c", "! grep -q 'index and transaction-log level' assets/Unstructured/Unstructured_Kenton_Smeltzer_Resume.md"],
       "weight": 1.0
     }
   ]

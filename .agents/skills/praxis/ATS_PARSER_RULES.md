@@ -25,6 +25,7 @@ This document outlines the research-backed guidelines that `praxis-pathos` (Draf
 
 ## 5. The "Implied Scale" Rejection
 **Research Fact:** Technical hiring managers reject resumes that list responsibilities without scale. "Managed a database" is a junior task; "Managed a 50TB distributed PostgreSQL cluster" is a senior task.
+*   **Rule:** **Explicit Numeric Tenure.** When summarizing total years of experience in a summary or objective, always use explicit numbers (e.g., "12+ years", "20 years") rather than text-based groupings like "a decade" or "two decades". Automated parsers and skimming recruiters frequently misread or undervalue text-based timeframes.
 *   **Rule:** Never allow an unquantified responsibility if the `knowledge_base.json` contains the metric. If the database lacks the metric, `praxis-logos` must reject the bullet and trigger the Expert Inquisitor wizard to ask the user for the scale.
 
 ## 6. Voice Authenticity (The Uncanny Valley Filter)
