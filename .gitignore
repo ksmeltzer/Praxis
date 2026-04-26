@@ -40,3 +40,7 @@ Tailored_*.md
 AGENTS.md
 CLAUDE.md
 .beads/
+
+# Temporary Scripts & PII
+*.py
+assets/
