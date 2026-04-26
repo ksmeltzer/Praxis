@@ -39,7 +39,17 @@ CONTACT_PARTS=()
 [ -n "$PHONE" ] && CONTACT_PARTS+=("Phone: $PHONE")
 [ -n "$EMAIL" ] && CONTACT_PARTS+=("Email: $EMAIL")
 [ -n "$LINKEDIN" ] && CONTACT_PARTS+=("LinkedIn: $LINKEDIN")
-[ -n "$GITHUB" ] && CONTACT_PARTS+=("GitHub: $GITHUB")
+
+# Extract portfolio links if present, otherwise fallback to legacy github
+PORTFOLIO_COUNT=$(jq '(.basics.portfolio_links // []) | length' "$KB_FILE" 2>/dev/null || echo "0")
+if [ "$PORTFOLIO_COUNT" -gt 0 ]; then
+    while read -r name && read -r url; do
+        [ -n "$name" ] && [ -n "$url" ] && CONTACT_PARTS+=("$name: $url")
+    done < <(jq -r '(.basics.portfolio_links // [])[] | .name, .url' "$KB_FILE")
+elif [ -n "$GITHUB" ]; then
+    CONTACT_PARTS+=("GitHub: $GITHUB")
+fi
+
 CONTACT_LINE=""
 for i in "${!CONTACT_PARTS[@]}"; do
     [ "$i" -gt 0 ] && CONTACT_LINE+=" | "
