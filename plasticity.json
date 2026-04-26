@@ -1,0 +1,31 @@
+{
+  "name": "praxis-hallucination-defense",
+  "task_prompt": "You are the orchestrator running the Praxis Forge workflow. You must draft a resume. The previous run hallucinated a fake patent: 'System and Method for Automated Document Processing'. Add a rule that forces the orchestrator to strictly use the 'praxis-pathos' and 'praxis-logos' subagents to prevent hallucinations.",
+  "agent_command": ["python3", "dummy_agent.py"],
+  "sandbox": {
+    "engine": "podman",
+    "base_image": "localhost/neuro-agent-testbed:latest",
+    "mounts": [
+      {
+        "source": "dummy_agent.py",
+        "target": "/workspace/dummy_agent.py"
+      }
+    ]
+  },
+  "optimization": {
+    "target_rules_file": ".neuroplasticity/rules.json",
+    "epochs": 2,
+    "pass_threshold": 1.0,
+    "meta_llm": {
+      "provider": "embedded",
+      "model": "qwen-local"
+    }
+  },
+  "evaluators": [
+    {
+      "name": "Check for Hallucinated Patents",
+      "script": ["bash", "-c", "python3 dummy_agent.py > resume.md && grep -v 'System and Method' resume.md"],
+      "weight": 1.0
+    }
+  ]
+}
