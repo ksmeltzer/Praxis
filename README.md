@@ -29,7 +29,7 @@ When tailoring an ATS-friendly resume for a specific job description, Praxis emp
 - **`praxis-logos` (The Truth-Teller):** Acts as a brutal auditor, rejecting any bullet point that hallucinates facts or uses AI-speak not explicitly backed by your Knowledge Base. They iterate until a mathematically honest, perfectly targeted document is produced.
 
 ### 3. 🎯 Hyper-Targeted Markdown to PDF Resumes
-Simply provide a job description URL (`/praxis gen <job-url>`), and Praxis will run a Skill Gap Analysis. It strategically selects the most relevant facts from your history (rather than dumping your whole resume) to generate a highly targeted, ATS-optimized PDF designed specifically to beat the bots for that exact role.
+Simply provide a job description URL (`/praxis <job-url>`), and Praxis will run a Skill Gap Analysis. It strategically selects the most relevant facts from your history (rather than dumping your whole resume) to generate a highly targeted, ATS-optimized PDF designed specifically to beat the bots for that exact role.
 
 ### 4. 🎤 Automated Interview Prep Sheets
 Beyond just getting the interview, Praxis helps you pass it. For every targeted resume generated, Praxis builds a comprehensive **Interview Guideline & Prep Sheet**. This document explicitly maps your past experience and metrics directly to the requirements in the job description, serving as a rapid orientation brief to remind you exactly how you align with the role when the recruiter calls months later.
@@ -47,13 +47,13 @@ Praxis installs directly into your local AI CLI environment (e.g., `opencode`, `
 ### The Intake Engine: `/praxis`
 Runs a deterministic Deep Harvest extraction across your root directory for raw exports, parsing data into fact pools and pushing it into your Knowledge Base. It then drafts baseline profiles utilizing a "Discrete Chronological Strategy."
 
-### The Fact Logger: `/praxis history <fact>`
-Quickly appends a specific accomplishment or metric to an existing role without requiring a full CV re-upload (e.g., `/praxis history at ACME co., I managed a team of 50`).
+### The Knowledge Updater: `/praxis <text>`
+Quickly appends specific accomplishments, metrics, or corrections using natural language without requiring a full CV re-upload (e.g., `/praxis at ACME co., I managed a team of 50`).
 
-### The Skill Enricher: `/praxis skill <skill_name> <description>`
-Replaces generic scraped skills with concrete contextual evidence (e.g., `/praxis skill Kubernetes Architected multi-region clusters...`), enriching the database for future targeting.
+### The Baseline Generator: `/praxis resume`
+Explicitly regenerates your general baseline resume (`assets/Resume.md`) directly from your knowledge base data.
 
-### The Forge: `/praxis gen <job-url>`
+### The Forge: `/praxis <job-url>`
 Executes the Skill Gap Analysis and the Pathos/Logos adversarial loop. Generates the targeted PDF, the Interview Prep Sheet, and organizes them perfectly into the target company's folder.
 
 ```mermaid
