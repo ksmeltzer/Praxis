@@ -74,7 +74,9 @@ git clone git@github.com:ksmeltzer/Praxis.git
 cd Praxis
 ```
 
-To install Praxis, follow your specific AI Agent Harness (e.g., `opencode`, `Claude Code`, or `GitHub Copilot`) tool's guide for installing local agents, skills, and custom commands from a project directory.
+To install Praxis, follow your specific AI Agent Harness (e.g., `opencode`, `Claude Code`, or `GitHub Copilot`) tool's guide for installing local agents, skills, and custom commands from a project directory. 
+
+*Note: In many modern AI CLI tools (like Claude Code and OpenCode), you can simply open the `Praxis` directory and the agents, slash commands, and skills are already pre-configured to work automatically via local environment files (`.claude/prompts/` and `.opencode/`).*
 
 ## 🔒 Privacy & Security
 
