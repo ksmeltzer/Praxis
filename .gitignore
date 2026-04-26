@@ -44,3 +44,4 @@ CLAUDE.md
 # Temporary Scripts & PII
 *.py
 assets/
+.tmp/

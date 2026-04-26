@@ -9,6 +9,7 @@ This skill implements the orchestrator logic for the Praxis adversarial resume b
 
 ## Architecture & File Structure
 - **Root Directory**: Kept clean. All generated output files (`Resume.md`, `LinkedIn_Profile.md`, `*_Resume.pdf`) are saved into the `assets/` folder. Targeted resumes are organized into company-specific subdirectories (e.g., `assets/{CompanyName}/`).
+- **`.tmp/`**: Any one-off utility scripts, agent experiments, or temporary data processing scripts MUST be created and executed inside the `.tmp/` directory, which is excluded from source control. NEVER create scripts in the project root.
 - **`.praxis/sources/`**: All raw input files (resumes, LinkedIn CSVs) are moved here immediately after parsing.
 - **`.praxis/data/`**: Contains the exhaustive, non-lossy backend database (`knowledge_base.json`).
 
