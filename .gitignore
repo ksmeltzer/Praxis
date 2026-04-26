@@ -23,6 +23,11 @@ __pycache__/
 *.pyc
 .ruff_cache/
 
+# Testing & Framework Environments
+.neuroplasticity/
+.opencode/
+launch-config.json
+
 # Local Config
 .env
 .env.local
