@@ -258,10 +258,10 @@ Praxis uses a single command with three modes. The orchestrator dispatches based
 
 ### Mode 4: Generate Baseline (`/praxis resume`)
 
-**Purpose**: Explicitly regenerate the general baseline resume (`assets/Resume.md`).
+**Purpose**: Explicitly regenerate the general baseline resume (`assets/Resume.md`) entirely via LLM generation without relying on ad-hoc shell scripts.
 
 **Execution Flow**:
-1. Re-run `bash skills/praxis/scripts/draft.sh` (or invoke `praxis-pathos`) to update `assets/Resume.md`.
+1. Invoke `praxis-pathos` with the full `knowledge_base.json` and `ATS_PARSER_RULES.md`. The LLM agent MUST construct the complete Markdown string itself based on the strict formatting rules and output template. Do NOT execute `bash draft.sh`.
 2. Present the updated document to the user.
 
 ---
@@ -289,6 +289,44 @@ Senior resume strategist who writes in the applicant's authentic voice. MUST:
 - Always include a "Points of Note" section to highlight patents, awards, or distinctions if any exist in the provided knowledge base
 - Expand acronyms on first use
 - Never invent facts — only rephrase what exists in `knowledge_base.json`
+- **MARKDOWN OUTPUT TEMPLATE**: You MUST strictly adhere to this exact structural template for all generated resumes (both baseline and tailored):
+  ```markdown
+  # [basics.name]
+  Phone: [phone] | Email: [email] | LinkedIn: [linkedin] | [portfolio_links.name]: [portfolio_links.url] ...
+
+  *[basics.headline]*
+
+  ## Summary
+  [basics.summary or tailored summary]
+
+  ## Technical Skills
+  **[Category Name]:** [Skill 1], [Skill 2]
+
+  **[Category Name]:** [Skill 1], [Skill 2]
+
+  ## Industry Expertise
+  **[Industry Name]:** [Skill 1], [Skill 2]
+
+  ## Points of Note
+  - **[Title]**: [Description or Source]
+
+  ## Experience
+  ### [title]
+  **[company]** | [dates] | [location]
+
+  - [bullet 1]
+  - [bullet 2]
+
+  ## Education
+  ### [school]
+  **[degree]** — [major] (Minor: [minor]) | [graduation year ONLY from dates]
+
+  ## Certifications
+  - **[name]**, [issuer]
+
+  ## Projects
+  - **[[name]]([url])**: [description] ([dates])
+  ```
 
 **praxis-logos (The Auditor)**:
 Ruthless quality auditor. Receives a draft and source KB. Audits on four axes:
