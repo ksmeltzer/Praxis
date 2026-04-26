@@ -12,6 +12,9 @@ This skill implements the orchestrator logic for the Praxis adversarial resume b
 - **`.tmp/`**: Any one-off utility scripts, agent experiments, or temporary data processing scripts MUST be created and executed inside the `.tmp/` directory, which is excluded from source control. NEVER create scripts in the project root.
 - **`.praxis/sources/`**: All raw input files (resumes, LinkedIn CSVs) are moved here immediately after parsing.
 - **`.praxis/data/`**: Contains the exhaustive, non-lossy backend database (`knowledge_base.json`).
+- **`.praxis/backups/`**: Automatically generated timestamped backups of `knowledge_base.json` before any destructive or generative changes are applied.
+
+**CRITICAL DATA SAFETY RULE**: Before executing ANY operation that writes or modifies `.praxis/data/knowledge_base.json` (such as Mode 1 Ingest, Mode 2 Knowledge Update, or appending missing skills in Mode 3 Forge), the Orchestrator MUST use the `bash` tool to create an immutable backup copy (e.g., `cp .praxis/data/knowledge_base.json .praxis/backups/knowledge_base_$(date +%s).json`). Failure to backup the user's curated data before a modification is a critical architectural violation.
 
 ## Knowledge Base Schema (`knowledge_base.json`)
 
