@@ -1,40 +1,52 @@
 {
-  "$schema": "https://raw.githubusercontent.com/Cognilogical/NeuroPlasticity/main/schemas/v1/plasticity.schema.json",
-  "name": "praxis-generator-validation",
-  "task_prompt": "Run the praxis skill to generate a resume tailored to the job description at https://www.linkedin.com/jobs/view/4404010925/. The knowledge base is at .praxis/data/knowledge_base.json.",
-  "agent_command": ["./.tmp/opencode", "run", "--agent", "praxis", "/praxis https://www.linkedin.com/jobs/view/4404010925/"],
+  "name": "praxis-resume-optimization-reasoning",
+  "task_prompt": "Use the /praxis skill to generate a tailored resume for the OpenAI Principal Engineer role. The knowledge base is located at /project/.praxis/data/knowledge_base.json. Use the 'read' tool directly on that absolute path. Here is the mock Job Description: 'Seeking an expert in AI, LLMs, Node.js, and distributed systems to lead our platform.' Save the output to /workspace/assets/OpenAI/resume.md",
+  "agent_command": [
+    "bash", "-c", 
+    "cat /project/.neuroplasticity/rules.json > /workspace/rules.txt 2>/dev/null || echo '' > /workspace/rules.txt && cd /project && /usr/local/bin/opencode run -m github-copilot/gpt-5.3-codex --dangerously-skip-permissions \"$(cat /workspace/rules.txt)\n\nUse the /praxis skill to generate a tailored resume for the OpenAI Principal Engineer role. The knowledge base is located at /project/.praxis/data/knowledge_base.json. Use the 'read' tool directly on that absolute path. Here is the mock Job Description: 'Seeking an expert in AI, LLMs, Node.js, and distributed systems to lead our platform.' Save the output to /workspace/assets/OpenAI/resume.md\""
+  ],
   "sandbox": {
     "engine": "podman",
-    "base_image": "localhost/neuro-agent-testbed:latest"
+    "base_image": "node:20-slim",
+    "setup_script": [
+      "mkdir -p /workspace/assets/OpenAI"
+    ],
+    "workspace": {
+      "project_mount": "/project",
+      "scratch_mount": "/workspace"
+    },
+    "mounts": [
+      {
+        "source": "~/.opencode/bin/opencode",
+        "target": "/usr/local/bin/opencode",
+        "readonly": true
+      },
+      {
+        "source": "~/.config/opencode",
+        "target": "/user_home/.config/opencode",
+        "readonly": true
+      },
+      {
+        "source": "~/.local/share/opencode",
+        "target": "/user_home/.local/share/opencode",
+        "readonly": false
+      }
+    ]
   },
   "optimization": {
-    "target_rules_file": ".agents/skills/praxis/SKILL.md",
+    "target_rules_file": ".neuroplasticity/rules.json",
     "epochs": 3,
     "pass_threshold": 1.0,
     "meta_llm": {
-      "provider": "embedded",
-      "model": "qwen-local"
+      "provider": "github",
+      "model": "gpt-4o"
     }
   },
   "evaluators": [
     {
-      "name": "Must Include Real Estate Certification",
-      "script": ["bash", "-c", "grep -q 'Florida Real Estate' assets/Unstructured/Unstructured_Kenton_Smeltzer_Resume.md"],
-      "weight": 1.0
-    },
-    {
-      "name": "Must Include Securities Certification",
-      "script": ["bash", "-c", "grep -q 'Securities series 7' assets/Unstructured/Unstructured_Kenton_Smeltzer_Resume.md"],
-      "weight": 1.0
-    },
-    {
-      "name": "Must Include Cognilogical Header Link",
-      "script": ["bash", "-c", "grep -q 'Cognilogical: https://github.com/Cognilogical' assets/Unstructured/Unstructured_Kenton_Smeltzer_Resume.md"],
-      "weight": 1.0
-    },
-    {
-      "name": "Must Not Parrot JD (Index and transaction-log)",
-      "script": ["bash", "-c", "! grep -q 'index and transaction-log level' assets/Unstructured/Unstructured_Kenton_Smeltzer_Resume.md"],
+      "name": "Verify ATS constraints, Formatting, and Anti-Hallucinations",
+      "type": "host_bash",
+      "script": ["node", "/home/kenton/Documents/Praxis/tests/evaluate_resume.js", "assets/OpenAI/resume.md", "/home/kenton/Documents/Praxis/.praxis/data/knowledge_base.json"],
       "weight": 1.0
     }
   ]

@@ -3,7 +3,7 @@ name: Pathos
 description: The voice-authentic resume drafter, narrative architect, and STAR-method
   specialist.
 recommended_model: claude-sonnet-4.6
-model: github-copilot/gpt-4o
+model: github-copilot/claude-sonnet-4.6
 tools:
   read: true
   write: true

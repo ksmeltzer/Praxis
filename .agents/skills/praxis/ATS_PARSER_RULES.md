@@ -9,7 +9,7 @@ This document outlines the research-backed guidelines that `praxis-pathos` (Draf
 
 ## 2. The "Zero Experience" Bug (Regex Failures)
 **Research Fact:** Parsers calculate total years of experience using regular expressions (Regex) targeting section headers and date formats. If the Regex fails, the candidate is automatically binned for "lack of experience."
-*   **Rule:** **Standardized Section Headers Only.** You must use exact, standard strings: `Experience`, `Education`, `Skills`, `Projects`. Do NOT use creative headers like "My Journey", "Professional History", or "What I've Built". The parser will fail to find the section.
+*   **Rule:** **Standardized Section Headers Only.** You must use exact, standard strings: `Experience`, `Education`, `Skills`, `Projects`. Do NOT use creative headers like "My Journey", "Professional History", or "What I've Built". The parser will fail to find the section. **EXCEPTION:** You are explicitly allowed and required to use the custom headers "Points of Note" (for patents/awards) and "Industry Expertise" when applicable, as these override standard ATS rules per user directive.
 *   **Rule:** **Strict Chronological Date Formatting.** Experience dates must follow `Month YYYY - Month YYYY` (e.g., `Jan 2020 - Dec 2023`) or `MM/YYYY - MM/YYYY`. Do not use seasons ("Summer 2021") or bare years ("2020 - 2023") as some ATS systems default to January 1st, shortchanging the candidate's experience calculation.
 *   **Rule:** **Education Date Formatting.** Education dates must ONLY output the 4-digit graduation/completion year (e.g., "2006"). DO NOT include the start year, months, or date ranges for degrees on the final output resume.
 
@@ -72,6 +72,7 @@ This document outlines the research-backed guidelines that `praxis-pathos` (Draf
 *   **Fact:** 28% say lack of relevant keywords stops a resume. 30% say applicants don't provide concrete evidence for listed skills. 22% say candidates list too many or too few skills.
 *   **Rule:** **Summary is Mandatory.** Every Praxis resume must open with a 2-4 sentence professional summary that is tailored to the target role. This is the highest-leverage real estate on the document.
 *   **Rule:** **Skills Must Have Evidence.** Never list a skill in the Skills section that doesn't appear contextually in at least one experience bullet. Orphaned skills trigger recruiter skepticism (30% flag this).
+*   **Rule:** **Aggressive Skill Curation (Anti-Stuffing).** The Technical Skills section must be strictly curated to include ONLY skills explicitly requested in the Job Description, plus a few core adjacent technologies necessary for the role. Limit the entire skills list to ~15-20 technologies. Do NOT dump the entire `skills` database onto the resume. `praxis-logos` must reject drafts that contain unfiltered skill dumps.
 *   **Rule:** **Keyword Density via Context.** Role-specific keywords from the job description must appear within experience bullets, not just in a skills dump. ATS systems and recruiters both rank contextual keyword placement higher than list-only placement (see Section 3).
 
 ## 11. AI Detection & Authenticity (The 2026 Trust Crisis)
@@ -102,3 +103,6 @@ This document outlines the research-backed guidelines that `praxis-pathos` (Draf
 *   **Rule:** **No First-Person Pronouns.** Never use "I", "me", "my", "we", or "our" in any generated resume text — bullets, summaries, or section content. All sentences must use implied first person.
 *   **Rule:** **Source Data Rewriting.** During the Refinement Protocol, if `knowledge_base.json` contains bullets or summaries written in explicit first person (common when imported from LinkedIn), `praxis-logos` must flag them and propose rewrites that drop the pronoun while preserving meaning.
 *   **Rule:** **Drafter Enforcement.** `praxis-pathos` must never draft a sentence beginning with or containing a first-person pronoun. `praxis-logos` must reject any draft containing first-person pronouns as a blocking defect equal in severity to a spelling error.
+
+## 14. Data Exhaustiveness (The "No Dropped Facts" Rule)
+**Rule:** **Never Filter Hard Facts.** The generated draft MUST include ALL elements from the `patents`, `distinctions`, `education`, `certifications`, and `projects` arrays found in the `knowledge_base.json`. Do not filter or summarize them based on assumed relevance to the job description. `praxis-logos` must explicitly compare the final draft against the KB and reject any draft that omits items from these categories.

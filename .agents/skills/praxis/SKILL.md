@@ -280,6 +280,12 @@ Praxis uses a single command with three modes. The orchestrator dispatches based
 
 **praxis-pathos (The Drafter)**:
 Senior resume strategist who writes in the applicant's authentic voice. MUST:
+- **TWO-PASS METHODOLOGY & VALIDATION (MANDATORY)**: 
+  1. **Pass 1 (Extraction):** Extract ALL entities from `knowledge_base.json` and map them exactly to the `RESUME_TEMPLATE.md` structure. Make ZERO editorial decisions or omissions.
+  2. **Pass 2 (Tailoring):** Review the target job description. Re-write the *descriptions and bullets* of the pre-formatted document to emphasize the target role. You are strictly forbidden from structurally deleting facts, hiding patents, dropping links, or modifying the ATS headers from the template.
+  3. **Pass 3 (Validation Loop - MANDATORY):** After writing the markdown file, you MUST run:
+     `node tests/evaluate_resume.js <path_to_resume> .praxis/data/knowledge_base.json`
+     If the script throws an error, you must read the errors, edit the markdown file to fix them, and re-run the script. You are not finished until the script outputs success. Every failure clubs a baby seal! 🦭🏏
 - Read `voice_profile.sample_fragments` BEFORE writing to internalize the applicant's phrasing
 - STRICTLY obey all constraints listed in the `generation_rules` array from the knowledge base.
 - Match `voice_profile` perspective, tone, and sentence structure exactly
@@ -293,44 +299,12 @@ Senior resume strategist who writes in the applicant's authentic voice. MUST:
 - Always include a "Points of Note" section to highlight patents, awards, or distinctions if any exist in the provided knowledge base
 - Expand acronyms on first use
 - Never invent facts — only rephrase what exists in `knowledge_base.json`
-- **MARKDOWN OUTPUT TEMPLATE**: You MUST strictly adhere to this exact structural template for all generated resumes (both baseline and tailored):
-  ```markdown
-  # [basics.name]
-  Phone: [phone] | Email: [email] | LinkedIn: [linkedin] | [portfolio_links.name]: [portfolio_links.url] ...
+- **STRICT TEMPLATE COMPLIANCE**: You MUST read and strictly adhere to the exact structural template defined in `.agents/skills/praxis/RESUME_TEMPLATE.md` for all generated resumes (both baseline and tailored). Do not use an internal format. You MUST include empty line breaks between each skill category to ensure proper markdown rendering and prevent mashing.
+- **NO DROPPED FACTS**: You MUST NEVER omit Patents, Awards, Distinctions, Education, or Certifications from the generated resume if they exist in the knowledge base.
+- **SKILL CURATION**: The "Technical Skills" section MUST be aggressively curated and capped at a maximum of 15-20 highly relevant skills. Do not dump the entire database.
+- **ABSOLUTE PATHS**: When saving output files (like the generated resume), you MUST use absolute paths (e.g., `/workspace/assets/...` or `/project/...`). Never use relative paths like `../workspace/`.
+- **ATS HEADERS**: You MUST use exact ATS-compliant headers (e.g., `## Summary`, `## Technical Skills`, `## Experience`). Never invent custom headers like "## Principal Systems Engineer".
 
-  *[basics.headline]*
-
-  ## Summary
-  [basics.summary or tailored summary]
-
-  ## Technical Skills
-  **[Category Name]:** [Skill 1], [Skill 2]
-
-  **[Category Name]:** [Skill 1], [Skill 2]
-
-  ## Industry Expertise
-  **[Industry Name]:** [Skill 1], [Skill 2]
-
-  ## Points of Note
-  - **[Title]**: [Description or Source]
-
-  ## Experience
-  ### [title]
-  **[company]** | [dates] | [location]
-
-  - [bullet 1]
-  - [bullet 2]
-
-  ## Education
-  ### [school]
-  **[degree]** — [major] (Minor: [minor]) | [graduation year ONLY from dates]
-
-  ## Certifications
-  - **[name]**, [issuer]
-
-  ## Projects
-  - **[[name]]([url])**: [description] ([dates])
-  ```
 - **EMPTY SECTION OMISSION**: If an array or object in `knowledge_base.json` is empty (e.g., `certifications: []`, `patents: []`, or `distinctions: []`), you MUST entirely omit that section and its header from the generated Markdown output. Do not print "None recorded" or empty headers.
 
 **praxis-logos (The Auditor)**:
@@ -357,14 +331,15 @@ DIRECTIVE_VIOLATIONS: [list or "None"]
 2. **Initialize**: Load `knowledge_base.json` and `voice_profile`.
 3. **Apply User Rules**: Load `rules.json`. Apply `date_overrides`, `company_replacements`, and `injected_roles` to the working copy.
 4. **Skill Gap Interview (Fitment Session)**: Compare JD requirements against KB skills. For each missing required skill, PAUSE and prompt the user ONE AT A TIME: *"The job requires [Skill]. Do you have experience with this? If so, at which company?"* Wait for the user to answer before asking about the next missing skill. Do not blob multiple skills into a single question. If the user provides a valid example, PERMANENTLY save the new skill to the global `skills` object and append it to that specific role's `skills_used` array. This ensures the KB grows stronger and the Drafter has actual KB evidence to pull from.
-5. **Relevance Filter**: Filter KB to entries semantically relevant to the JD. Drop roles older than 15 years unless uniquely relevant. **INDUSTRY SPECIFIC FILTERING:** When creating the filtered KB for tailoring, completely EXCLUDE any `industry_expertise` categories UNLESS the target Job Description is strictly within that same industry. Industry specific skills must only appear on resumes tailored to that exact industry.
-6. **Adversarial Loop (MAX_ITERATIONS = 3)**:
+5. **Compensation Intelligence Lookup**: To combat asymmetric information advantage, autonomously look up compensation data using tools (like `webfetch` to `https://h1bdata.info/index.php?em=[Company]&job=[Role]`) for the target company and role. DO NOT prompt the user for this information. If you find salary data, inject it into the Interview Prep Sheet. If you cannot find data, proceed using internal market estimates.
+6. **Relevance Filter**: Filter KB to entries semantically relevant to the JD. Drop roles older than 15 years unless uniquely relevant. **INDUSTRY SPECIFIC FILTERING:** When creating the filtered KB for tailoring, completely EXCLUDE any `industry_expertise` categories UNLESS the target Job Description is strictly within that same industry. Industry specific skills must only appear on resumes tailored to that exact industry.
+7. **Adversarial Loop (MAX_ITERATIONS = 3)**:
     - **Phase 1 (Draft)**: Invoke `praxis-pathos` with JD analysis, filtered KB, `voice_profile`, and `ATS_PARSER_RULES.md`.
     - **Phase 2 (Audit)**: Invoke `praxis-logos` with the draft, FULL `knowledge_base.json`, `voice_profile`, and `ATS_PARSER_RULES.md`.
     - **Phase 3 (Iterate)**: If `REJECTED`, feed issues back to pathos. If not approved by iteration 3, present remaining issues to user.
-7. **Output**: Create a directory for the target company (`assets/{TargetCompany}/`). Save the tailored Markdown resume to `assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Resume.md`. (CRITICAL: `{TargetCompany}` MUST be the actual name of the company from the target job req, e.g., `Microsoft`).
-8. **Generate PDF**: Run `npx md-to-pdf "assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Resume.md" --stylesheet .agents/skills/praxis/resume.css --config-file scripts/mdpdf.config.js` (if available in the environment) or use `pandoc` to convert the markdown to PDF. DO NOT delete the Markdown file; leave it for the user to edit manually if desired.
-9. **Interview Prep Sheet**: Generate `assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Interview_Prep.md`:
+8. **Output**: Create a directory for the target company (`assets/{TargetCompany}/`). Save the tailored Markdown resume to `assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Resume.md`. (CRITICAL: `{TargetCompany}` MUST be the actual name of the company from the target job req, e.g., `Microsoft`).
+9. **Generate PDF**: Run `npx md-to-pdf "assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Resume.md" --stylesheet .agents/skills/praxis/resume.css --config-file scripts/mdpdf.config.js` (if available in the environment) or use `pandoc` to convert the markdown to PDF. DO NOT delete the Markdown file; leave it for the user to edit manually if desired.
+10. **Interview Prep Sheet**: Generate `assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Interview_Prep.md`:
     - **Role Overview**: Company, title, seniority, team/department
     - **Your Story Arc**: 60-second elevator pitch tailored to the role
     - **Key Talking Points**: Map each major JD requirement to your strongest evidence with specific metrics to cite
@@ -372,9 +347,19 @@ DIRECTIVE_VIOLATIONS: [list or "None"]
     - **Technical Questions**: 5-7 technical deep-dive questions based on required skills
     - **Skill Gap Preparation**: Talking points for thin areas that honestly frame adjacent experience
     - **Questions to Ask Them**: 5 thoughtful questions demonstrating domain knowledge
-    - **Salary & Negotiation Context**: Note compensation range if in JD, flag for research if not
+    - **Salary & Negotiation Context**: Provide a robust, highly strategic breakdown:
+        - **Market Estimation & Company Tier**: (e.g., Big 4 Consulting vs FAANG vs Startup) and how this specific tier typically structures compensation (Base vs. Equity vs. Bonus).
+        - **Data Injection**: Incorporate any data found via autonomous lookups (e.g., H1B base salary floors). Explicitly explain that H1B data represents the *absolute floor* base salary for foreign workers without equity/bonuses, meaning a US applicant should use it as a strict minimum baseline.
+        - **Negotiation Strategy**: Specific tactics to combat information asymmetry (e.g., anchoring against the massive "HR ranges", asking for ranges first, leveraging lack of sponsorship costs).
     - **Red Flags**: Concerns from JD analysis (vague responsibilities, unrealistic requirements, seniority mismatches)
-10. **Summary**: Display company, role, iteration count, unresolved warnings, output paths, and cost.
+11. **Targeted Cover Letter**: Generate `assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Cover_Letter.md`:
+    - **CRITICAL VOICE COMPLIANCE**: The cover letter MUST be written strictly adhering to the `voice_profile` from the knowledge base (perspective, tone, sentence structure, vocabulary, and avoidances).
+    - **STRICT TEMPLATE COMPLIANCE**: You MUST read and strictly adhere to the exact structural template defined in `.agents/skills/praxis/COVER_LETTER_TEMPLATE.md`.
+    - Address the specific pain points and core requirements mentioned in the Job Description.
+    - Highlight 1-2 key narrative arcs from the user's career that perfectly align with the role's level and domain.
+    - Keep it concise (3-4 paragraphs), professional, and highly targeted.
+    - Generate a PDF version: Run `npx md-to-pdf "assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Cover_Letter.md" --stylesheet .agents/skills/praxis/resume.css --config-file scripts/mdpdf.config.js`.
+12. **Summary**: Display company, role, iteration count, unresolved warnings, output paths, and cost.
 
 ---
 
