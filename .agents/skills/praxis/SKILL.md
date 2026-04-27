@@ -145,7 +145,7 @@ Praxis uses a single command with three modes. The orchestrator dispatches based
 
 1. **Ingest**: The Orchestrator MUST use its available tools (`bash`, `read`, `glob`) to autonomously extract text from raw source files located in `.praxis/sources/`. This includes reading `*.txt` files, extracting CSVs from LinkedIn ZIP exports, and converting `.pdf` resumes using `pdftotext` or Python equivalents. Aggregate the raw context in memory or a temporary file.
 
-2. **LLM-Native Parsing**: The Orchestrator MUST use LLM cognition on the extracted raw text to:
+3. **LLM-Native Parsing**: The Orchestrator MUST use LLM cognition on the extracted raw text to:
     - Fuzzy-match and merge identical roles (e.g., "The Lowbush Company" vs "Lowbush Company")
     - Resolve date discrepancies — prefer the most specific dates
     - **DATE FORMAT RULE**: All experience dates MUST be `Mon YYYY - Mon YYYY` (e.g., `Jan 2015 - Jul 2025`). LinkedIn CSVs provide bare years — default to `Jan` for start dates and `Dec` for end dates. Current roles use `Present` as end date.
@@ -153,7 +153,7 @@ Praxis uses a single command with three modes. The orchestrator dispatches based
     - Pool ALL distinct bullets from every source — the PDF often has richer accomplishments than LinkedIn
     - Write structured JSON to `.praxis/data/knowledge_base.json` conforming to the schema above
 
-3. **Refinement Protocol**: After writing the initial KB, the Orchestrator MUST perform multi-pass critical analysis. This is the core value of the skill. The user has final say on all changes.
+4. **Refinement Protocol**: After writing the initial KB, the Orchestrator MUST perform multi-pass critical analysis. This is the core value of the skill. The user has final say on all changes.
 
     **Pass 0 — Voice Extraction (MUST run first)**: Build a voice profile from the applicant's raw source materials before any rewriting.
     - Read original PDF text, LinkedIn summary, and raw text files from `.praxis/sources/raw_context.txt`
@@ -206,20 +206,20 @@ Praxis uses a single command with three modes. The orchestrator dispatches based
 
     **Pass 6 — Spelling & Grammar Audit**: Fix all spelling, grammar, and punctuation errors silently. Report what was changed after the fact. Only prompt when a correction changes meaning.
 
-4. **GitHub Sync**: Use the `bash` tool with `gh` CLI (if available) or generic web fetching to pull the user's public repositories, descriptions, languages, and star counts. Update the `projects` array in the `knowledge_base.json`.
+5. **GitHub Sync**: Use the `bash` tool with `gh` CLI (if available) or generic web fetching to pull the user's public repositories, descriptions, languages, and star counts. Update the `projects` array in the `knowledge_base.json`.
 
-5. **Baseline Draft**: Invoke `praxis-pathos` to explicitly regenerate the general baseline resume (`assets/Resume.md`) entirely via LLM generation based on the strict formatting rules and output template. Do NOT rely on bash scripts to generate the file.
+6. **Baseline Draft**: Invoke `praxis-pathos` to explicitly regenerate the general baseline resume (`assets/Resume.md`) entirely via LLM generation based on the strict formatting rules and output template. Do NOT rely on bash scripts to generate the file.
 
     **CRITICAL**: Draft MUST NOT generate until refinement is complete and user-approved.
 
-6. **Adversarial Baseline Review**: After draft generation, run a two-agent review:
+7. **Adversarial Baseline Review**: After draft generation, run a two-agent review:
     1. **Logos (Auditor)**: Review against `ATS_PARSER_RULES.md` for compliance defects
     2. **Pathos (Drafter)**: Review for impact, voice authenticity, weak bullets, missed opportunities
     3. Both produce categorized defect lists (BLOCKING / MAJOR / MINOR)
     4. Fix all BLOCKING defects, address MAJOR where possible, log MINOR as beads
     5. Regenerate after fixes. Repeat if BLOCKING defects remain (max 3 iterations).
 
-7. **Cleanup**: Move all processed raw files into `.praxis/sources/`.
+8. **Cleanup**: Move all processed raw files into `.praxis/sources/`.
 
 ---
 
@@ -246,16 +246,16 @@ Praxis uses a single command with three modes. The orchestrator dispatches based
     - **New certification/education**: → add to the relevant array
     - **General context**: Something that doesn't fit neatly → the orchestrator decides where it belongs
 
-2. **Fuzzy Match**: When the user names a company, role, or skill, fuzzy-match against existing KB data. Don't require exact names — "dexcare", "DexCare", "Dex Care" should all match.
+3. **Fuzzy Match**: When the user names a company, role, or skill, fuzzy-match against existing KB data. Don't require exact names — "dexcare", "DexCare", "Dex Care" should all match.
 
-3. **Write**: Apply the change to `knowledge_base.json`.
+4. **Write**: Apply the change to `knowledge_base.json`.
 
-4. **Spelling & Grammar**: Silently fix any errors in the new content before writing. Report fixes after the fact.
+5. **Spelling & Grammar**: Silently fix any errors in the new content before writing. Report fixes after the fact.
 
-5. **Voice Compliance**: If the input is a new bullet, rewrite it to match `voice_profile` before storing. Show the user the rewritten version.
+6. **Voice Compliance**: If the input is a new bullet, rewrite it to match `voice_profile` before storing. Show the user the rewritten version.
 
-6. **Confirm**: Tell the user exactly what was added/changed and where.
-7. **Audit (Panel Review)**: Immediately after confirming the change, invoke `praxis-logos` to audit the *newly added bullet* for tone, metrics, passive voice, and factual consistency. Present this feedback to the user. (Do NOT automatically regenerate the baseline resume).
+7. **Confirm**: Tell the user exactly what was added/changed and where.
+8. **Audit (Panel Review)**: Immediately after confirming the change, invoke `praxis-logos` to audit the *newly added bullet* for tone, metrics, passive voice, and factual consistency. Present this feedback to the user. (Do NOT automatically regenerate the baseline resume).
 
 ---
 
@@ -310,10 +310,10 @@ Senior resume strategist who writes in the applicant's authentic voice. MUST:
 **praxis-logos (The Auditor)**:
 Ruthless quality auditor. Receives a draft and source KB. Audits on four axes:
 1. **Factual Accuracy**: Every claim must trace to a KB bullet. Flag hallucinations.
-2. **Voice Compliance**: Compare against `voice_profile`. A correct bullet that sounds like an LLM is a defect equal to a hallucination.
-3. **ATS Compliance**: Verify all `ATS_PARSER_RULES.md` rules.
-4. **Tailoring Quality**: Is the resume optimized for THIS job? Are selected bullets the best available?
-5. **Directive Compliance**: Did the draft violate any rules in the `generation_rules` array?
+3. **Voice Compliance**: Compare against `voice_profile`. A correct bullet that sounds like an LLM is a defect equal to a hallucination.
+4. **ATS Compliance**: Verify all `ATS_PARSER_RULES.md` rules.
+5. **Tailoring Quality**: Is the resume optimized for THIS job? Are selected bullets the best available?
+6. **Directive Compliance**: Did the draft violate any rules in the `generation_rules` array?
 
 Verdict format:
 ```
@@ -328,21 +328,22 @@ DIRECTIVE_VIOLATIONS: [list or "None"]
 #### Execution Flow
 
 1. **Ingest JD**: Fetch the job description from the URL. Extract: company name, role title, required skills, preferred skills, key responsibilities, seniority level.
-2. **Initialize**: Load `knowledge_base.json` and `voice_profile`.
-3. **Apply User Rules**: Load `rules.json`. Apply `date_overrides`, `company_replacements`, and `injected_roles` to the working copy.
-4. **Skill Gap Interview (Fitment Session)**: Compare JD requirements against KB skills. For each missing required skill, PAUSE and prompt the user ONE AT A TIME: *"The job requires [Skill]. Do you have experience with this? If so, at which company, and briefly, how did you use it?"* Wait for the user to answer before asking about the next missing skill. Do not blob multiple skills into a single question. If the user provides a valid example:
+2. **Company Context Harvesting (Deep Research)**: Do not just trust the JD text. You MUST perform deep research on the target company using available tools (like `webfetch` or LLM search capabilities) to understand their core business model, target market, primary products, and underlying industry (e.g., discovering a company is a Web3/Crypto company even if the specific role is just "AI Engineer"). Use this macro-context to aggressively pull forward adjacent skills from the KB that align with the company's DNA.
+3. **Initialize**: Load `knowledge_base.json` and `voice_profile`.
+4. **Apply User Rules**: Load `rules.json`. Apply `date_overrides`, `company_replacements`, and `injected_roles` to the working copy.
+5. **Skill Gap Interview (Fitment Session)**: Compare JD requirements against KB skills. For each missing required skill, PAUSE and prompt the user ONE AT A TIME: *"The job requires [Skill]. Do you have experience with this? If so, at which company, and briefly, how did you use it?"* Wait for the user to answer before asking about the next missing skill. Do not blob multiple skills into a single question. If the user provides a valid example:
     - Pass their raw description to `praxis-pathos` to draft a new resume bullet in the user's `voice_profile`.
     - Pass the drafted bullet to `praxis-logos` to audit and refine.
     - Once approved, PERMANENTLY save the new skill to the global `skills` object, append it to that specific role's `skills_used` array, AND append the newly wordsmithed bullet to that role's `bullets` array in `knowledge_base.json`. This ensures the KB continually grows stronger with concrete, well-crafted evidence.
-5. **Compensation Intelligence Lookup**: To combat asymmetric information advantage, autonomously look up compensation data using tools (like `webfetch` to `https://h1bdata.info/index.php?em=[Company]&job=[Role]`) for the target company and role. DO NOT prompt the user for this information. If you find salary data, inject it into the Interview Prep Sheet. If you cannot find data, proceed using internal market estimates.
-6. **Relevance Filter**: Filter KB to entries semantically relevant to the JD. Drop roles older than 15 years unless uniquely relevant. **INDUSTRY SPECIFIC FILTERING:** When creating the filtered KB for tailoring, completely EXCLUDE any `industry_expertise` categories UNLESS the target Job Description is strictly within that same industry. Industry specific skills must only appear on resumes tailored to that exact industry.
-7. **Adversarial Loop (MAX_ITERATIONS = 3)**:
+6. **Compensation Intelligence Lookup**: To combat asymmetric information advantage, autonomously look up compensation data using tools (like `webfetch` to `https://h1bdata.info/index.php?em=[Company]&job=[Role]`) for the target company and role. DO NOT prompt the user for this information. If you find salary data, inject it into the Interview Prep Sheet. If you cannot find data, proceed using internal market estimates.
+7. **Relevance Filter**: Filter KB to entries semantically relevant to the JD. Drop roles older than 15 years unless uniquely relevant. **INDUSTRY SPECIFIC FILTERING:** When creating the filtered KB for tailoring, completely EXCLUDE any `industry_expertise` categories UNLESS the target Job Description is strictly within that same industry. Industry specific skills must only appear on resumes tailored to that exact industry.
+8. **Adversarial Loop (MAX_ITERATIONS = 3)**:
     - **Phase 1 (Draft)**: Invoke `praxis-pathos` with JD analysis, filtered KB, `voice_profile`, and `ATS_PARSER_RULES.md`.
     - **Phase 2 (Audit)**: Invoke `praxis-logos` with the draft, FULL `knowledge_base.json`, `voice_profile`, and `ATS_PARSER_RULES.md`.
     - **Phase 3 (Iterate)**: If `REJECTED`, feed issues back to pathos. If not approved by iteration 3, present remaining issues to user.
-8. **Output**: Create a directory for the target company (`assets/{TargetCompany}/`). Save the tailored Markdown resume to `assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Resume.md`. (CRITICAL: `{TargetCompany}` MUST be the actual name of the company from the target job req, e.g., `Microsoft`).
-9. **Generate PDF**: Run `npx md-to-pdf "assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Resume.md" --stylesheet .agents/skills/praxis/resume.css --config-file scripts/mdpdf.config.js` (if available in the environment) or use `pandoc` to convert the markdown to PDF. DO NOT delete the Markdown file; leave it for the user to edit manually if desired.
-10. **Interview Prep Sheet**: Generate `assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Interview_Prep.md`:
+9. **Output**: Create a directory for the target company (`assets/{TargetCompany}/`). Save the tailored Markdown resume to `assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Resume.md`. (CRITICAL: `{TargetCompany}` MUST be the actual name of the company from the target job req, e.g., `Microsoft`).
+10. **Generate PDF**: Run `npx md-to-pdf "assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Resume.md" --stylesheet .agents/skills/praxis/resume.css --config-file scripts/mdpdf.config.js` (if available in the environment) or use `pandoc` to convert the markdown to PDF. DO NOT delete the Markdown file; leave it for the user to edit manually if desired.
+11. **Interview Prep Sheet**: Generate `assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Interview_Prep.md`:
     - **Role Overview**: Company, title, seniority, team/department
     - **Your Story Arc**: 60-second elevator pitch tailored to the role
     - **Key Talking Points**: Map each major JD requirement to your strongest evidence with specific metrics to cite
@@ -355,14 +356,14 @@ DIRECTIVE_VIOLATIONS: [list or "None"]
         - **Data Injection**: Incorporate any data found via autonomous lookups (e.g., H1B base salary floors). Explicitly explain that H1B data represents the *absolute floor* base salary for foreign workers without equity/bonuses, meaning a US applicant should use it as a strict minimum baseline.
         - **Negotiation Strategy**: Specific tactics to combat information asymmetry (e.g., anchoring against the massive "HR ranges", asking for ranges first, leveraging lack of sponsorship costs).
     - **Red Flags**: Concerns from JD analysis (vague responsibilities, unrealistic requirements, seniority mismatches)
-11. **Targeted Cover Letter**: Generate `assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Cover_Letter.md`:
+12. **Targeted Cover Letter**: Generate `assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Cover_Letter.md`:
     - **CRITICAL VOICE COMPLIANCE**: The cover letter MUST be written strictly adhering to the `voice_profile` from the knowledge base (perspective, tone, sentence structure, vocabulary, and avoidances).
     - **STRICT TEMPLATE COMPLIANCE**: You MUST read and strictly adhere to the exact structural template defined in `.agents/skills/praxis/COVER_LETTER_TEMPLATE.md`.
     - Address the specific pain points and core requirements mentioned in the Job Description.
     - Highlight 1-2 key narrative arcs from the user's career that perfectly align with the role's level and domain.
     - Keep it concise (3-4 paragraphs), professional, and highly targeted.
     - Generate a PDF version: Run `npx md-to-pdf "assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Cover_Letter.md" --stylesheet .agents/skills/praxis/resume.css --config-file scripts/mdpdf.config.js`.
-12. **Summary**: Display company, role, iteration count, unresolved warnings, output paths, and cost.
+13. **Summary**: Display company, role, iteration count, unresolved warnings, output paths, and cost.
 
 ---
 
@@ -374,5 +375,5 @@ DIRECTIVE_VIOLATIONS: [list or "None"]
 ## STRICT ARCHITECTURAL CONSTRAINTS (ANTI-PATTERNS)
 **CRITICAL - DO NOT FAIL:** This skill represents a **generalized**, abstract, multi-agent orchestrator. It is NOT a hardcoded generator for any specific user (e.g., "Kenton Smeltzer").
 1. **NO AD-HOC SCRIPTS**: Under no circumstances should the Orchestrator or any subagent write one-off Python, Node.js, or Bash scripts to massage data, update the knowledge base, or format resumes. All operations must be performed using pure LLM cognition (reading the JSON, generating text natively) or standard, pre-installed command-line tools (`jq`, `pandoc`). Writing temporary scripts (`.tmp/*.py`) to manipulate the user's personal data is a complete architectural failure of the Praxis system.
-2. **NO HARDCODED IDENTITY**: Do not hardcode specific names (like "Kenton Smeltzer"), specific emails, specific companies, or specific absolute paths (like `/home/kenton/...`). All data must be read dynamically from `.praxis/data/knowledge_base.json`. The system must work identically if a completely different user clones the repository and runs `/praxis`.
-3. **NO HARDCODED PORTFOLIO LOGIC**: Do not assume the existence of "Cognilogical" or "AccessUSA". If a user does not have `basics.portfolio_links`, the system must degrade gracefully. The logic must handle *any* array of links, not just the developer's specific portfolio.
+3. **NO HARDCODED IDENTITY**: Do not hardcode specific names (like "Kenton Smeltzer"), specific emails, specific companies, or specific absolute paths (like `/home/kenton/...`). All data must be read dynamically from `.praxis/data/knowledge_base.json`. The system must work identically if a completely different user clones the repository and runs `/praxis`.
+4. **NO HARDCODED PORTFOLIO LOGIC**: Do not assume the existence of "Cognilogical" or "AccessUSA". If a user does not have `basics.portfolio_links`, the system must degrade gracefully. The logic must handle *any* array of links, not just the developer's specific portfolio.
