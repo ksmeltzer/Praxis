@@ -23,18 +23,22 @@ Using a single-shot prompt to ask an LLM to "write my resume" results in three c
 ### 1. 🗄️ Permanent, Lossless Career Knowledge Base
 Instead of summarizing your history into Markdown, Praxis iteratively ingests raw data (PDFs, GitHub exports, LinkedIn CSVs) into a strict, loss-proof relational database (`.praxis/data/knowledge_base.json`). It maps every tool, skill, and metric to the exact project where it was used, ensuring you never lose the hard numbers that prove your impact.
 
-### 2. ⚖️ Adversarial AI Agents (Pathos & Logos)
+### 2. 🔄 The Self-Enriching Flywheel (Skill Gap Interview)
+Every time you apply for a job, your Knowledge Base gets stronger. If Praxis detects a required skill in a job description that isn't in your database, it pauses and asks you: *"Did you use [Skill] at a previous company? How?"* 
+You reply with a rough brain-dump. Praxis hands your raw text to the adversarial agent panel to format into a perfect STAR-method bullet in your exact tone of voice, and then **permanently injects that new bullet and skill into your Knowledge Base.** Over time, your career database continually grows deeper, richer, and more detailed with zero extra effort on your part.
+
+### 3. ⚖️ Adversarial AI Agents (Pathos & Logos)
 When tailoring an ATS-friendly resume for a specific job description, Praxis employs a rigorous two-agent adversarial loop:
 - **`praxis-pathos` (The Visionary & Coach):** Drafts the resume using your saved Voice Profile and the STAR method, focusing on compelling narrative and impact.
 - **`praxis-logos` (The Truth-Teller):** Acts as a brutal auditor, rejecting any bullet point that hallucinates facts or uses AI-speak not explicitly backed by your Knowledge Base. They iterate until a mathematically honest, perfectly targeted document is produced.
 
-### 3. 🎯 Hyper-Targeted Markdown to PDF Resumes
+### 4. 🎯 Hyper-Targeted Markdown to PDF Resumes
 Say goodbye to generic applications. Simply provide a job description URL (`/praxis <job-url>`), and Praxis will run a precision Skill Gap Analysis. It strategically selects the most relevant facts from your history to generate a highly targeted, ATS-optimized PDF designed specifically to beat the bots for that exact role.
 
-### 4. 🎤 Automated Interview Prep Sheets
+### 5. 🎤 Automated Interview Prep Sheets
 Beyond just getting the interview, Praxis helps you pass it. For every targeted resume generated, Praxis builds a comprehensive **Interview Guideline & Prep Sheet**. This document explicitly maps your past experience and metrics directly to the requirements in the job description, serving as a rapid orientation brief when the recruiter calls.
 
-### 5. 📂 Context-Preserving Organization
+### 6. 📂 Context-Preserving Organization
 *"Which version of my resume did I send to AcmeCorp again?"* 
 Praxis automatically organizes your generated resumes, tailored cover letters, and Interview Prep Sheets into dedicated company folders (e.g., `assets/AcmeCorp/`). You can instantly pull up the folder to see exactly what the job description was, what resume you sent, and the mapped talking points.
 
