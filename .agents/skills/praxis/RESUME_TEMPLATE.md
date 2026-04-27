@@ -1,6 +1,6 @@
 # [basics.name]
 [phone] | [email] | [location]
-[linkedin] | [portfolio_links.name]: [portfolio_links.url] ...
+[linkedin] | [portfolio_links]
 
 ## [basics.headline]
 (Note: This is the ONLY custom header allowed. All others MUST be exact matches like "## Summary", "## Experience", etc.)
