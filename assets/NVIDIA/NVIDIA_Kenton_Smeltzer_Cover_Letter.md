@@ -1,4 +1,4 @@
-# Kenton Smeltzer
+Kenton Smeltzer
 786-933-0944 | ksmeltzer@gmail.com | Summerland Key, Florida
 http://www.linkedin.com/in/kentonsmeltzer | GitHub: https://github.com/ksmeltzer | Cognilogical: https://github.com/Cognilogical
 
@@ -9,16 +9,13 @@ NVIDIA
 
 Dear Hiring Team at NVIDIA,
 
-Delivering foundational models at enterprise scale requires bridging the gap between raw compute capability and strict production governance. I am applying for the Senior Solutions Architect, Generative AI Specialist position at NVIDIA to architect secure, high-scale generative AI workflows that translate strategic vision into resilient enterprise implementation.
+I am writing to express my direct interest in the Senior Solutions Architect, Generative AI Specialist role at NVIDIA. Over the past two decades, I have architected high-scale, distributed enterprise systems, and my recent work focuses entirely on engineering resilient RAG pipelines, autonomous agentic workflows, and deterministic AI memory architectures. NVIDIA is building the physical and software foundation of the AI era, and I want to deploy enterprise-grade generative AI solutions on that infrastructure.
 
-My career centers on architecting complex, distributed platforms and integrating agentic workflows into highly regulated environments. At Voya Financial, I established the AI Center of Excellence and directed the strategic vision for the Digital Self Service organization. I specialize in evaluating and benchmarking foundational models, matching specific model capabilities, latency profiles, and token costs to precise enterprise application requirements while maintaining strict financial compliance protocols including SOC 2 and Model Risk Governance. 
+Translating executive AI strategy into scalable enterprise execution requires rigorous benchmarking and deep infrastructure optimization. At Voya Financial, I established the AI Center of Excellence and orchestrated complex agent patterns that analyzed live customer audio to surface targeted financial opportunities in real-time. I actively evaluate, benchmark, and deploy foundational LLMs, matching latency profiles and token costs to precise enterprise requirements while scaling secure RAG pipelines across cloud-native environments. 
 
-My technical foundation spans both enterprise delivery and advanced open-source AI research:
-*   **Production Generative AI:** Orchestrated Databricks AI workflows and secure RAG pipelines across Azure and Bedrock to analyze customer interactions in real-time, surfacing targeted financial opportunities.
-*   **Cognitive Architectures:** Engineered NeuroStrata, a 3-tier Cognitive Memory Architecture in Rust utilizing LanceDB and Qdrant, alongside NeuroCortex, an adversarial engine that reduces LLM agent hallucinations by up to 90%.
-*   **High-Scale Distributed Systems:** Authored a pending patent (US20250103405A1) for a distributed, event-based data platform at DexCare, and scaled high-volume AI inference workloads using cloud-native patterns.
+My architectural approach bridges rapid generative AI innovation with absolute operational security. Through my independent open-source research at Cognilogical, I engineered NeuroStrata—a cognitive memory architecture written in Rust utilizing LanceDB and KuzuDB—and NeuroCortex, a deterministic engine that leverages adversarial feedback to reduce LLM agent hallucinations by up to 90%. Furthermore, I have consistently delivered policy-driven security frameworks utilizing Open Policy Agent (OPA) alongside complex AI pipelines, ensuring strict compliance across highly regulated financial and healthcare systems like DexCare.
 
-I am eager to leverage my expertise in RAG pipelines, adversarial modeling, and global-scale infrastructure to accelerate NVIDIA's client engagements and generative AI adoption. I welcome the opportunity to discuss how my technical background aligns with your objectives.
+I am eager to bring my expertise in benchmarking foundational models, deploying autonomous workflows, and scaling high-volume LLM inference workloads to NVIDIA. I welcome the opportunity to discuss how my hands-on systems engineering background will accelerate the deployment of your generative AI solutions for global enterprise partners.
 
 Sincerely,
 
