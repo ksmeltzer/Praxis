@@ -2,7 +2,7 @@
 
 Praxis employs a deterministic, adversarial testing methodology to evaluate and select foundation models for specialized agent roles. Generating a mathematically honest, highly formatted, ATS-compliant resume that survives strict parsing rules is a surprisingly rigorous task for Large Language Models.
 
-To ensure reliability, we utilize **NeuroPlasticity**—a Self-Reinforced Testing Framework (SRTF)—to run **Adversarial Waterfall Tests** against various model architectures.
+To ensure reliability, we utilize **[NeuroPlasticity](https://github.com/Cognilogical/NeuroPlasticity)**—a Self-Reinforced Testing Framework (SRTF)—to run **Adversarial Waterfall Tests** against various model architectures.
 
 ---
 
