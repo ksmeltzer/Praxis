@@ -9,7 +9,9 @@
 
 ## 🧠 The Blank Page Problem is Dead.
 
-Using a single-shot prompt to ask an LLM to "write my resume" results in three catastrophic failures:
+**[👉 Read the full Getting Started Guide here!](GETTING_STARTED.md)**
+
+Using a single-shot prompt to ask an LLM to "write my resume" results in three catastrophic failures: prompt to ask an LLM to "write my resume" results in three catastrophic failures:
 1. **Summarization Loss:** LLMs inherently compress facts, stripping away the exact metrics, technologies, and scale that actually get you hired.
 2. **Sycophancy & Hallucination:** AI invents "synergistic paradigms" and hallucinates responsibilities to make you sound good, causing you to fail rigorous technical interviews.
 3. **Context Collapse:** When recruiters call back a month later, you have no idea what resume you sent them or what the job description even was.
