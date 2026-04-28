@@ -63,7 +63,7 @@ To ensure the agents accurately map your update into the database, always includ
 3. **The Skills Used:** What specific technologies were involved?
 
 **✅ Good Example:**
-> `/praxis At DexCare, I architected a real-time event pipeline using Apache Kafka and Redis, which reduced admission latency by 40%.`
+> `/praxis At Acme Corp, I architected a real-time event pipeline using Apache Kafka and Redis, which reduced admission latency by 40%.`
 
 **❌ Bad Example:**
 > `/praxis I built an event pipeline and saved a lot of time.` *(The agent won't know which company to attach this to, or what skills to log).*
