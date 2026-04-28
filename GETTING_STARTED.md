@@ -68,6 +68,17 @@ To ensure the agents accurately map your update into the database, always includ
 **❌ Bad Example:**
 > `/praxis I built an event pipeline and saved a lot of time.` *(The agent won't know which company to attach this to, or what skills to log).*
 
+
+> 💡 **Pro Tip: You Are Talking to an Agent, Not a CLI!**
+> 
+> Remember that your AI harness (OpenCode, Claude Code, etc.) is fully aware of the Praxis skill and the underlying `knowledge_base.json` file. You are not strictly bound to the `/praxis` slash commands for every little thing.
+> 
+> If you need to make structural adjustments, bulk edits, or custom queries, just ask the agent in natural language! For example, you can just say: 
+> 
+> *"In the Praxis knowledge base, please combine the 'JavaScript' and 'TypeScript' skills into a single 'JavaScript / TypeScript' entry everywhere they appear, because they tend to go hand-in-hand."*
+> 
+> The agent will automatically use its tools to surgically update your database for you!
+
 ---
 
 ## Phase 4: Targeting a Specific Job (The Forge)
