@@ -101,6 +101,6 @@ The Praxis pipeline relies on two adversarial agents defined in the `.agents/` d
 - `.agents/praxis-pathos.md` (The Drafter)
 - `.agents/praxis-logos.md` (The Auditor)
 
-By default, these agents are configured to use specific models (e.g., `github-copilot/claude-sonnet-4.6` and `github-copilot/gpt-4o`) because our testing proved that Claude 4.6 Sonnet is vastly superior at strict markdown template adherence, while GPT-4o is excellent at auditing and reasoning.
+By default, these agents are configured to use specific models (e.g., `github-copilot/claude-sonnet-4.6` and `github-copilot/gpt-4o`) because **[our testing](TESTING.md)** proved that Claude 4.6 Sonnet is vastly superior at strict markdown template adherence, while GPT-4o is excellent at auditing and reasoning.
 
 **Important:** You may need to update the `model:` string inside these files to match the exact model identifier used by your specific AI provider. If you do not know the correct model string for your provider, you can look it up at **[https://models.dev](https://models.dev)**.
