@@ -280,10 +280,11 @@ Praxis uses a single command with three modes. The orchestrator dispatches based
 
 **praxis-pathos (The Drafter)**:
 Senior resume strategist who writes in the applicant's authentic voice. MUST:
+- **ANTI-LAZY & FAILURE HANDLING (MANDATORY)**: If you cannot fetch the job description (e.g., due to bot blocking on LinkedIn) or lack sufficient context, you MUST FAIL LOUDLY and ask the user for the text. You are strictly forbidden from generating 20-byte stub/placeholder files to artificially "succeed".
 - **TWO-PASS METHODOLOGY & VALIDATION (MANDATORY)**: 
   1. **Pass 1 (Extraction):** Extract ALL entities from `knowledge_base.json` and map them exactly to the `RESUME_TEMPLATE.md` structure. Make ZERO editorial decisions or omissions.
   2. **Pass 2 (Tailoring):** Review the target job description. Re-write the *descriptions and bullets* of the pre-formatted document to emphasize the target role. You are strictly forbidden from structurally deleting facts, hiding patents, dropping links, or modifying the ATS headers from the template.
-  3. **Pass 3 (Validation Loop - MANDATORY):** After writing the markdown file, you MUST run:
+  3. **Pass 3 (Validation Loop - MANDATORY):** After writing the markdown file, you MUST verify the file is fully populated (not a stub) and then run:
      `node tests/evaluate_resume.js <path_to_resume> .praxis/data/knowledge_base.json`
      If the script throws an error, you must read the errors, edit the markdown file to fix them, and re-run the script. You are not finished until the script outputs success. Every failure clubs a baby seal! 🦭🏏
 - Read `voice_profile.sample_fragments` BEFORE writing to internalize the applicant's phrasing
@@ -327,7 +328,7 @@ DIRECTIVE_VIOLATIONS: [list or "None"]
 
 #### Execution Flow
 
-1. **Ingest JD**: Fetch the job description from the URL. Extract: company name, role title, required skills, preferred skills, key responsibilities, seniority level.
+1. **Ingest JD**: Fetch the job description from the URL. Extract: company name, role title, required skills, preferred skills, key responsibilities, seniority level. **CRITICAL:** If fetching the URL fails (e.g., LinkedIn anti-bot blocking), the Orchestrator MUST fail loudly and request the raw text from the user. Do NOT pass an empty job description to the subagents.
 2. **Company Context Harvesting (Deep Research)**: Do not just trust the JD text. You MUST perform deep research on the target company using available tools (like `webfetch` or LLM search capabilities) to understand their core business model, target market, primary products, and underlying industry (e.g., discovering a company is a Web3/Crypto company even if the specific role is just "AI Engineer"). Use this macro-context to aggressively pull forward adjacent skills from the KB that align with the company's DNA.
 3. **Initialize**: Load `knowledge_base.json` and `voice_profile`.
 4. **Apply User Rules**: Load `rules.json`. Apply `date_overrides`, `company_replacements`, and `injected_roles` to the working copy.
@@ -335,7 +336,7 @@ DIRECTIVE_VIOLATIONS: [list or "None"]
     - Pass their raw description to `praxis-pathos` to draft a new resume bullet in the user's `voice_profile`.
     - Pass the drafted bullet to `praxis-logos` to audit and refine.
     - Once approved, PERMANENTLY save the new skill to the global `skills` object, append it to that specific role's `skills_used` array, AND append the newly wordsmithed bullet to that role's `bullets` array in `knowledge_base.json`. This ensures the KB continually grows stronger with concrete, well-crafted evidence.
-6. **Compensation Intelligence Lookup**: To combat asymmetric information advantage, autonomously look up compensation data using tools (like `webfetch` to `https://h1bdata.info/index.php?em=[Company]&job=[Role]`) for the target company and role. DO NOT prompt the user for this information. If you find salary data, inject it into the Interview Prep Sheet. If you cannot find data, proceed using internal market estimates.
+6. **Compensation Intelligence Lookup (MANDATORY)**: The Orchestrator MUST scan the job description text for explicit salary bands. If none exist in the JD, autonomously look up compensation data using tools (like `webfetch` to `https://h1bdata.info/index.php?em=[Company]&job=[Role]`). You MUST pass this comp data (or the failure to find it) explicitly to `praxis-pathos`.
 7. **Relevance Filter**: Filter KB to entries semantically relevant to the JD. Drop roles older than 15 years unless uniquely relevant. **INDUSTRY SPECIFIC FILTERING:** When creating the filtered KB for tailoring, completely EXCLUDE any `industry_expertise` categories UNLESS the target Job Description is strictly within that same industry. Industry specific skills must only appear on resumes tailored to that exact industry.
 8. **Adversarial Loop (MAX_ITERATIONS = 3)**:
     - **Phase 1 (Draft)**: Invoke `praxis-pathos` with JD analysis, filtered KB, `voice_profile`, and `ATS_PARSER_RULES.md`.
@@ -344,18 +345,8 @@ DIRECTIVE_VIOLATIONS: [list or "None"]
 9. **Output**: Create a directory for the target company (`assets/{TargetCompany}/`). Save the tailored Markdown resume to `assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Resume.md`. (CRITICAL: `{TargetCompany}` MUST be the actual name of the company from the target job req, e.g., `Microsoft`).
 10. **Generate PDF**: Run `npx md-to-pdf "assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Resume.md" --stylesheet .agents/skills/praxis/resume.css --config-file scripts/mdpdf.config.js` (if available in the environment) or use `pandoc` to convert the markdown to PDF. DO NOT delete the Markdown file; leave it for the user to edit manually if desired.
 11. **Interview Prep Sheet**: Generate `assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Interview_Prep.md`:
-    - **Role Overview**: Company, title, seniority, team/department
-    - **Your Story Arc**: 60-second elevator pitch tailored to the role
-    - **Key Talking Points**: Map each major JD requirement to your strongest evidence with specific metrics to cite
-    - **Behavioral Questions**: 5-7 "Tell me about a time..." questions with STAR-format answer skeletons using real KB facts
-    - **Technical Questions**: 5-7 technical deep-dive questions based on required skills
-    - **Skill Gap Preparation**: Talking points for thin areas that honestly frame adjacent experience
-    - **Questions to Ask Them**: 5 thoughtful questions demonstrating domain knowledge
-    - **Salary & Negotiation Context**: Provide a robust, highly strategic breakdown:
-        - **Market Estimation & Company Tier**: (e.g., Big 4 Consulting vs FAANG vs Startup) and how this specific tier typically structures compensation (Base vs. Equity vs. Bonus).
-        - **Data Injection**: Incorporate any data found via autonomous lookups (e.g., H1B base salary floors). Explicitly explain that H1B data represents the *absolute floor* base salary for foreign workers without equity/bonuses, meaning a US applicant should use it as a strict minimum baseline.
-        - **Negotiation Strategy**: Specific tactics to combat information asymmetry (e.g., anchoring against the massive "HR ranges", asking for ranges first, leveraging lack of sponsorship costs).
-    - **Red Flags**: Concerns from JD analysis (vague responsibilities, unrealistic requirements, seniority mismatches)
+    - **STRICT TEMPLATE COMPLIANCE**: You MUST read and strictly adhere to the exact structural template defined in `.agents/skills/praxis/INTERVIEW_PREP_TEMPLATE.md`.
+    - **SALARY ENFORCEMENT**: You MUST populate the `## Salary & Negotiation Context` section. It is strictly forbidden to omit this section. Use the comp data passed by the Orchestrator.
 12. **Targeted Cover Letter**: Generate `assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Cover_Letter.md`:
     - **CRITICAL VOICE COMPLIANCE**: The cover letter MUST be written strictly adhering to the `voice_profile` from the knowledge base (perspective, tone, sentence structure, vocabulary, and avoidances).
     - **STRICT TEMPLATE COMPLIANCE**: You MUST read and strictly adhere to the exact structural template defined in `.agents/skills/praxis/COVER_LETTER_TEMPLATE.md`.
