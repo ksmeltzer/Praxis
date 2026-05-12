@@ -1,0 +1,12 @@
+{
+  "name": "praxis-apply",
+  "version": "1.0.0",
+  "description": "Playwright auto-applier for Praxis",
+  "main": "index.js",
+  "scripts": {
+    "postinstall": "npx playwright install chromium"
+  },
+  "dependencies": {
+    "playwright": "^1.42.1"
+  }
+}
