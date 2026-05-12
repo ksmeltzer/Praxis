@@ -1,0 +1,140 @@
+# Kenton Smeltzer
+786-933-0944 | ksmeltzer@gmail.com | Summerland Key, Florida
+http://www.linkedin.com/in/kentonsmeltzer | https://github.com/ksmeltzer, https://github.com/Cognilogical
+
+Principal Systems Engineer & AI Solutions Architect | RAG pipelines, Agentic Workflows, and High-Scale Enterprise Systems
+
+## Summary
+Principal Systems Engineer, AI Solutions Architect, and former CTO with over 20 years of experience designing high-scale, secure, and distributed enterprise platforms. Translating executive strategy into hands-on enterprise implementation. Expertise spans building global reservation engines (Marriott, Orlando.com), secure healthcare data platforms (DexCare), and complex federal investigation systems (Joint Interagency Task Force). Recently focused on architecting advanced RAG pipelines, agentic workflows, and distributed event-driven systems, with a foundation in adversarial modeling and spatial intelligence tracing back to DoD simulators in 1998.
+
+## Technical Skills
+
+**Artificial Intelligence & Machine Learning:** Agentic Workflows, Retrieval-Augmented Generation (RAG), Adversarial AI, Model Context Protocol (MCP), LangChain, LangGraph
+
+**Cloud & Infrastructure:** Cloud-Native AI Architecture, Kubernetes, Azure Foundry, Amazon Bedrock, Open Policy Agent (OPA)
+
+**Languages:** Rust, Go, Python, JavaScript / TypeScript, C/C++
+
+**Frameworks & Libraries:** Node Ecosystem, React Ecosystem, Golang Ecosystem
+
+**Data & Databases:** Vector Databases (LanceDB, Qdrant), PostgreSQL, KùzuDB
+
+## Industry Expertise
+
+**Healthcare:** HIPAA Compliance, Protected Health Information (PHI), Healthcare Data Interoperability, Clinical Decision Support Systems (CDSS)
+
+**Finance:** Fintech, 401K Management Operations, Financial Data Processing
+
+**Travel & Hospitality:** Global Reservation Engines, High-Volume Transaction Processing
+
+## Points of Note
+- **[Patent]**: **[Entity relationships and versioning](https://patents.google.com/patent/US20250103405A1/en)** — Evolutionary versioned, schema enforced, distributed graph. Featuring transparent storage, holographic caching, data change detection, topological event routing system. Transparent graph to relational structural mapping, eliminating the need for complex ORMs via solving the impedance mismatch from the data layer not the application layer. (Issuer: US20250103405A1, Date: Mar 27, 2025)
+- **[Distinction]**: **Keynote Speaker at IBM Impact 2009** — Presented on emerging web technologies and strategies for positioning enterprise systems to capitalize on shifting industry standards. (Source: Marriott Vacation Club)
+- **[Distinction]**: **MVP Award (AccessUSA, 2004)** — Recognized for exceptional technical leadership in architecting the strategic escape from a proprietary legacy RTO system and decommissioning costly infrastructure. (Source: AccessUSA)
+
+## Experience
+
+**Independent Open Source AI Research (Cognilogical)**
+*Principal AI Architect & Creator*
+Apr 2026 - Present
+- Directed independent open-source research and development dedicated to advancing autonomous AI agent capabilities, adversarial validation, and cognitive memory architectures.
+- Engineered NeuroStrata, a Cognitive Memory Architecture for Agents written in Rust, featuring a specialized 3-tier memory namespace and vector search capabilities utilizing LanceDB, Qdrant, and KuzuDB.
+- Architected NeuroCortex, a Cognitive Deterministic Engine (CDE) built in Rust that provides adversarial feedback to reduce LLM agent hallucinations by up to 90%.
+- Developed NeuroPlasticity, a Self-Reinforced Testing Framework (SRTF) in Rust for AI agents to self-learn and validate behaviors.
+- Created NeuroGenesis, an AI Architecture Compiler (AAC) shell script that scaffolds customized adversarial panels chaired by evidence-backed agent specialists, optimizing token efficiency.
+
+**Voya Financial (Contract via Lowbush Company)**
+*AI & Security Solutions Consultant (Contract)*
+Dec 2025 - Present
+- Led the Digital Self Service (DSS) innovation incubator and established the AI Center of Excellence (COE) as Principal AI and security consultant. 
+- Orchestrated a Databricks AI workflow and complex agent orchestration patterns to analyze customer phone calls in real-time, surfacing targeted financial opportunities to live agents.
+- Engineered custom AI orchestration tools to modernize the SDLC, including an automated 7-persona AI Architecture Review Panel and an AI-driven PR analyzer.
+- Delivered policy-driven, customer-facing application security frameworks utilizing Open Policy Agent (OPA) alongside secure RAG pipelines, ensuring strict financial compliance (SOC 2, PII).
+- Architected a real-time, plugin-based signal processing engine in Go, utilizing NATS JetStream as the event broker to process over 10,000 requests per second.
+- Engineered a 100% automated agentic GitHub workflow to autonomously resolve SonarQube, Snyk, and accessibility defects, utilizing an adversarial LLM panel architecture.
+
+**AGIS Software (Contract via Lowbush Company)**
+*AI & Systems Engineering Consultant*
+Jul 2025 - Dec 2025
+- Engineered real-time, event-based geospatial coordination systems for Military, Police, and Fire Operations.
+- Architected distributed event-based infrastructure utilizing MQTT, MQTT over WebSockets, and AMQP to synchronize web, mobile, and IoT devices.
+- Applied AI solutions to real-time field audio communications and geospatial logistics to enhance situational awareness.
+
+**DexCare**
+*Principal Software Engineer / Director of Special Projects*
+Jul 2021 - Jul 2025
+- Engineered full stack healthcare solutions for major medical providers (Kaiser Permanente, Piedmont, CHN) using Node, Golang, Python, Kubernetes, and Postgres on AWS.
+- Authored pending patent (US20250103405A1) for a distributed, event-based data platform handling healthcare operations.
+- Delivered a best-in-class patient matching algorithm that significantly reduced duplicate record rates while maintaining strict HIPAA compliance.
+- Architected agentic workflows and AI-enabled service integrations utilizing Python, LangChain, and LangGraph to orchestrate complex healthcare data pipelines.
+- Scaled high-volume AI inference and LLM agent workloads utilizing cloud-native patterns and AI-specific data pipelines on Amazon Bedrock.
+
+**Joint Interagency Task Force**
+*Principal Software Engineer / Government Projects Lead*
+Jan 2015 - Jul 2021
+- Directed a 15-person cross-functional engineering team to deliver massive data aggregation platforms and inter-agency integration.
+- Architected smart contract tracing tools for Bitcoin, Ethereum, and Monero, exposing implementation vulnerabilities and identifying black market activity for joint agencies.
+- Developed AI agents to aid joint agencies in investigating and interdicting major human and drug trafficking events.
+
+**Lowbush Company**
+*Enterprise Architect / CTO*
+Feb 2010 - Present
+- Delivered full stack development consultancy for clients including Gartner, eCollege, EuroRSCG, and IBM. 
+- Designed a scalable backend infrastructure using Golang, PostgreSQL, and RabbitMQ deployed via Podman.
+- Architected the Key West Health digital platform utilizing Server-Driven UI (SDUI) principles and a modern Headless CMS architecture.
+- Engineered Nibble.Fish, a Flutter-based mobile application integrating a custom-trained Convolutional Neural Network (CNN) based on MobileNetV2 for automated fish species detection.
+
+**Marriott Vacation Club**
+*Senior Director of Technology*
+Jan 2006 - Dec 2009
+- Directed architecture and development for a 50-person cross-functional technical organization, realigning Release Management and improving overall software quality across a massive enterprise footprint.
+- Led initiative to convert the entire web-reservation system over to a modern browser application using RESTful services.
+- Salvaged project with a $10M overrun, redesigning the system to account for legacy performance issues and completing it in 4 months.
+- Led enterprise-wide PCI compliance initiatives, executing data scrubbing protocols and integrating secure payment gateways.
+
+**AccessUSA (Hotelbeds)**
+*CTO / Director of Engineering*
+Jan 2003 - Dec 2006
+- Directed a 50-person global engineering organization, establishing enterprise software standards and acting as primary liaison between executive leadership and offshore teams.
+- Architected the strategic escape from a proprietary, closed-source legacy RTO system (FoxPro) via the Strangler Fig pattern.
+- Architected and delivered high-volume, public-facing external APIs supplying real-time hotel night inventory to major Online Travel Agencies (OTAs).
+
+**Orlando.com**
+*CTO / Principal Engineer*
+Jan 2001 - Dec 2003
+- Directed all technical strategy and hands-on architecture for a lean engineering team, scaling the startup from inception to acquisition by Hotels.com in two years.
+- Designed and launched the core web property and high-volume hotel booking engine in just two months.
+
+**Body International**
+*Lead Developer*
+Jan 2000 - Dec 2001
+- Orchestrated an enterprise Service-Oriented Architecture (SOA) / Enterprise Service Bus (ESB) platform acting as a digital microkernel.
+- Directed an 8-person engineering team to design and deploy an integrated Enterprise Resource Planning (ERP) system unifying operations.
+
+**Early Career History**
+*Senior Developer / Architect*
+Jan 1995 - Dec 2000
+- Directed the architecture and design of 3D simulation software, level design, and AI logic using C++, Java, and OpenGL.
+- Architected and deployed mass-scale distributed military intelligence and battlefield simulators for the US Army and Navy.
+
+## Education
+
+**University of Phoenix**
+*Bachelors of Science* — Information Technology (Minor: Web Technology) | 2006
+
+## Certifications
+
+- **Mortgage Broker and Lending Certification Course**, Indian River Community College
+- **Health Life and Annuities Certification Course**, Florida Insurance School
+- **Florida Real Estate Certification Course**, Doolittle Realty School
+- **Securities series 7 Certification Course**, Examco
+
+## Projects
+
+- **[NeuroGenesis](https://github.com/Cognilogical/NeuroGenesis)**: NeuroGenesis is an AI Architecture Compiler(AAC) skill. It scaffolds customized adversarial panels chaired by evidence-backed agent specialists. (Apr 2026 - Present)
+- **[NeuroPlasticity](https://github.com/Cognilogical/NeuroPlasticity)**: Self-Reinforced Testing Framework (SRTF) for AI Agents. (Apr 2026 - Present)
+- **[NeuroCortex](https://github.com/Cognilogical/NeuroCortex)**: NeuroCortex is a Cognitive Deterministic Engine (CDE), it provides adversarial feedback to reduce LLM agent hallucinations by up to 90% (Apr 2026 - Present)
+- **[NeuroStrata](https://github.com/Cognilogical/NeuroStrata)**: Cognitive Memory Architecture for Agents (Apr 2026 - Present)
+- **[Parallax](https://github.com/ksmeltzer/Parallax)**: Causally Aligned Distributed Systems (Apr 2026 - Present)
+- **[Allele](https://github.com/ksmeltzer/Allele)**: Modular Genetic Micro-Trading Engine (Jan 2026 - Present)
+- **[ARC-7](https://github.com/ksmeltzer/ARC-7)**: Agentic Architecture Review Panel skill (Jan 2026 - Present)
