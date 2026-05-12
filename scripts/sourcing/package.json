@@ -1,0 +1,12 @@
+{
+  "name": "praxis-sourcing",
+  "version": "1.0.0",
+  "description": "Public ATS and LinkedIn scraper for Praxis pipeline",
+  "main": "source_linkedin.js",
+  "scripts": {
+    "start:linkedin": "node source_linkedin.js"
+  },
+  "dependencies": {
+    "linkedin-jobs-scraper": "^3.3.3"
+  }
+}
