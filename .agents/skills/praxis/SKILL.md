@@ -1,6 +1,6 @@
 ---
 name: praxis
-description: "Adversarial, Multi-Agent Career Knowledge Base & Resume Pipeline. Usage: /praxis (ingest), /praxis <text> (add knowledge), /praxis <url> (generate tailored resume)"
+description: "Adversarial, Multi-Agent Career Knowledge Base & Resume Pipeline. Usage: /praxis init (setup), /praxis (ingest), /praxis <text> (update), /praxis <url> (forge), /praxis search (source)"
 trigger: /praxis
 ---
 # Praxis Skill
@@ -129,10 +129,12 @@ Praxis uses a single command with three modes. The orchestrator dispatches based
 ### Dispatch Logic
 
 ```
-/praxis              → INGEST MODE   (no argument)
-/praxis resume       → GENERATE MODE (explicitly generate baseline resume)
-/praxis <text>       → KNOWLEDGE MODE (argument is free text)
-/praxis <url>        → FORGE MODE    (argument starts with http:// or https://)
+/praxis init         → SETUP MODE    (Interview user for KB and Search Ontology)
+/praxis              → INGEST MODE   (Rebuild KB from raw sources)
+/praxis resume       → GENERATE MODE (Explicitly generate baseline resume)
+/praxis <text>       → KNOWLEDGE MODE (Argument is free text)
+/praxis <url>        → FORGE MODE    (Argument starts with http:// or https://)
+/praxis search       → SOURCE MODE   (Execute job search and queue high-scoring JDs)
 ```
 
 ---
@@ -356,6 +358,38 @@ DIRECTIVE_VIOLATIONS: [list or "None"]
     - Keep it concise (3-4 paragraphs), professional, and highly targeted.
     - Generate a PDF version: Run `npx md-to-pdf "assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Cover_Letter.md" --stylesheet .agents/skills/praxis/resume.css --config-file scripts/mdpdf.config.js`.
 13. **Summary**: Display company, role, iteration count, unresolved warnings, output paths, and cost.
+
+---
+
+### Mode 0: Setup & Ontology Interview (`/praxis init`)
+
+**Purpose**: Initialize the Praxis environment, ensure the Knowledge Base is populated, and define the Job Search Ontology for automated sourcing.
+
+**Execution Flow**:
+1. Check for the existence of `.praxis/data/knowledge_base.json`. If missing, direct the user to upload raw PDFs/CSVs to `.praxis/sources/` and trigger the Ingest workflow.
+2. **Job Search Interview**: Prompt the user to opt-in to the Auto-Search/Submit path.
+3. If opted in, conduct a sequential interview to populate `.praxis/data/search_parameters.json` mapping:
+   - **Compensation**: Minimum Base Salary (W2) and Contract Hourly Rate (C2C/1099 translation).
+   - **Domain Multipliers**: Specific niche domains (e.g., F1, Ballistics) that drastically increase a job's priority score.
+   - **Tech Stack Multipliers**: Highly preferred technologies (e.g., Rust, Go) vs. Dealbreaker technologies (e.g., .NET).
+   - **Overrides**: "Fuck You" money thresholds (e.g., $500k+) that bypass all dealbreakers.
+4. Finalize the schema and initialize the `.praxis/queue/` directory for incoming scraped jobs.
+
+---
+
+### Mode 5: Sourcing Engine (`/praxis search`)
+
+**Purpose**: Top-of-funnel automated job searching, scoring, and queuing based on the user's defined Ontology.
+
+**Execution Flow**:
+1. **Load Parameters**: Read `.praxis/data/search_parameters.json`.
+2. **API/Aggregation Poll**: Autonomously query available search APIs (e.g., Brave API for open ATS systems like Greenhouse/Lever, or designated third-party LinkedIn aggregators) using targeted boolean queries (e.g., `site:greenhouse.io ("Principal" OR "Staff") AND ("AI" OR "Rust")`).
+3. **LLM Evaluation Loop**: For each job description found:
+   - Extract raw text, salary (if hidden), and location constraints.
+   - Compare against Hard Requirements (Location, Salary Floor). If it fails, silently discard.
+   - Score the JD (0-100) using Base Weights (Compensation, Domain Interest, Tech Stack) and Domain/Tech Multipliers.
+4. **Queue Generation**: If a job scores above the user's threshold, write a markdown file to `.praxis/queue/{CompanyName}_{Role}.md` containing the JD, the calculated score, the salary parsed, and the matched multipliers.
+5. **Report**: Output a summary of the highest-scoring jobs placed in the queue to the user for manual review. The user can then invoke `/praxis <url>` on a queued job to execute the Forge generation.
 
 ---
 
