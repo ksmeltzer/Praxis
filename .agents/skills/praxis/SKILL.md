@@ -11,7 +11,7 @@ This skill implements the orchestrator logic for the Praxis adversarial resume b
 - **Root Directory**: Kept clean. All generated output files (`Resume.md`, `LinkedIn_Profile.md`, `*_Resume.pdf`) are saved into the `assets/` folder. Targeted resumes are organized into company-specific subdirectories (e.g., `assets/{CompanyName}/`).
 - **`.tmp/`**: Any one-off utility scripts, agent experiments, or temporary data processing scripts MUST be created and executed inside the `.tmp/` directory, which is excluded from source control. NEVER create scripts in the project root.
 - **`.praxis/sources/`**: All raw input files (resumes, LinkedIn CSVs) are moved here immediately after parsing.
-- **`.praxis/data/`**: Contains the exhaustive, non-lossy backend database (`knowledge_base.json`).
+- **`.praxis/data/`**: Contains the exhaustive backend database (`knowledge_base.json`), the search ontology (`search_parameters.json`), and the application tracking system (`applications.json`).
 - **`.praxis/backups/`**: Automatically generated timestamped backups of `knowledge_base.json` before any destructive or generative changes are applied.
 
 **CRITICAL DATA SAFETY RULE**: Before executing ANY operation that writes or modifies `.praxis/data/knowledge_base.json` (such as Mode 1 Ingest, Mode 2 Knowledge Update, or appending missing skills in Mode 3 Forge), the Orchestrator MUST use the `bash` tool to create an immutable backup copy (e.g., `cp .praxis/data/knowledge_base.json .praxis/backups/knowledge_base_$(date +%s).json`). Failure to backup the user's curated data before a modification is a critical architectural violation.
@@ -135,6 +135,7 @@ Praxis uses a single command with three modes. The orchestrator dispatches based
 /praxis <text>       → KNOWLEDGE MODE (Argument is free text)
 /praxis <url>        → FORGE MODE    (Argument starts with http:// or https://)
 /praxis search       → SOURCE MODE   (Execute job search and queue high-scoring JDs)
+/praxis track        → TRACK MODE    (View pipeline status or update a job's state)
 ```
 
 ---
@@ -390,6 +391,18 @@ DIRECTIVE_VIOLATIONS: [list or "None"]
    - Score the JD (0-100) using Base Weights (Compensation, Domain Interest, Tech Stack) and Domain/Tech Multipliers.
 4. **Queue Generation**: If a job scores above the user's threshold, write a markdown file to `.praxis/queue/{CompanyName}_{Role}.md` containing the JD, the calculated score, the salary parsed, and the matched multipliers.
 5. **Report**: Output a summary of the highest-scoring jobs placed in the queue to the user for manual review. The user can then invoke `/praxis <url>` on a queued job to execute the Forge generation.
+
+---
+
+### Mode 6: Application Tracking (`/praxis track`)
+
+**Purpose**: Manage the internal Applicant Tracking System (ATS) lifecycle for all sourced and forged jobs.
+
+**Execution Flow**:
+1. Read `.praxis/data/applications.json`.
+2. Display a dashboard of current jobs in the pipeline grouped by state: `QUEUED`, `FORGED`, `APPLIED`, `INTERVIEWING`, `REJECTED`, `OFFER`.
+3. Allow the user to transition a job's state (e.g., "Mark target company X as APPLIED").
+4. **Implicit Tracking Rule**: When the Orchestrator successfully completes Mode 3 (Forge) for a URL or queued Markdown file, it MUST automatically create or update an entry in `applications.json` setting its state to `FORGED`, capturing the Company Name, Role, URL, Date, and parsed Compensation.
 
 ---
 
