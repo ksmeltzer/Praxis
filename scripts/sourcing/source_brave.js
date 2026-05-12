@@ -1,9 +1,24 @@
+require("dotenv").config();
 const axios = require('axios');
 const cheerio = require('cheerio');
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
-const BRAVE_API_KEY = process.env.BRAVE_API_KEY;
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+let BRAVE_API_KEY = process.env.BRAVE_API_KEY;
+try {
+    // Attempt to pull from system keyring if secret-tool is installed
+    const keyringKey = execSync('secret-tool lookup service praxis account brave_api', { stdio: 'pipe' }).toString().trim();
+    if (keyringKey) {
+        BRAVE_API_KEY = keyringKey;
+        console.log("[Praxis Sourcing] Loaded API key from system keyring.");
+    }
+} catch (e) {
+    // Fallback to .env quietly if secret-tool fails or isn't installed
+}
+
 const STAGING_DIR = path.join(__dirname, '../../.praxis/staging');
 
 if (!fs.existsSync(STAGING_DIR)) {
@@ -23,8 +38,8 @@ async function fetchBraveResults(query) {
         const response = await axios.get('https://api.search.brave.com/res/v1/web/search', {
             params: {
                 q: query,
-                count: 10, // Top 10 results per query
-                freshness: 'pw' // Past week to keep it fresh
+                count: 10,
+                freshness: 'pw'
             },
             headers: {
                 'Accept': 'application/json',
@@ -42,7 +57,6 @@ async function fetchBraveResults(query) {
 async function scrapeJobPage(url, title, company) {
     console.log(`[Scraper] Fetching content for: ${company} - ${title}`);
     try {
-        // These ATS sites have almost zero bot protection, standard GET works
         const { data } = await axios.get(url, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
@@ -52,8 +66,6 @@ async function scrapeJobPage(url, title, company) {
         const $ = cheerio.load(data);
         let description = '';
 
-        // Very basic extraction, relying on the fact that LLMs are great at reading messy text
-        // We just grab the main body of the page.
         if (url.includes('greenhouse.io')) {
             description = $('#content').text() || $('body').text();
         } else if (url.includes('lever.co')) {
@@ -64,7 +76,6 @@ async function scrapeJobPage(url, title, company) {
             description = $('body').text();
         }
 
-        // Clean up excessive whitespace
         description = description.replace(/\s+/g, ' ').trim();
 
         const safeCompany = (company || 'Unknown').replace(/[^a-z0-9]/gi, '_').toLowerCase();
@@ -94,8 +105,7 @@ ${description}
 
 async function run() {
     if (!BRAVE_API_KEY) {
-        console.error("FATAL: BRAVE_API_KEY environment variable is not set.");
-        console.error("Run: export BRAVE_API_KEY='your_key_here' && npm run start:brave");
+        console.error("FATAL: BRAVE_API_KEY environment variable or keyring entry is not set.");
         process.exit(1);
     }
 
@@ -103,18 +113,20 @@ async function run() {
     
     for (const query of QUERIES) {
         const results = await fetchBraveResults(query);
+        
+        // Critical: Sleep for 1.5 seconds between Brave API queries to avoid 429 Rate Limits
+        await sleep(1500);
+
         for (const result of results) {
-            // Brave often returns the company name in the profile or title
             let company = result.profile?.name || "Unknown Company";
             let title = result.title || "Unknown Role";
             
-            // Cleanup common title artifacts
             title = title.replace(/ - Greenhouse/i, '').replace(/ - Lever/i, '').replace(/ - Ashby/i, '').trim();
             
             await scrapeJobPage(result.url, title, company);
             
             // Sleep for 1.5 seconds between direct website hits to be polite
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            await sleep(1500);
         }
     }
     
