@@ -2,14 +2,13 @@
 [phone] | [email] | [location]
 [linkedin] | [portfolio_links]
 
-## [basics.headline]
-(Note: This is the ONLY custom header allowed. All others MUST be exact matches like "## Summary", "## Experience", etc.)
+[basics.headline]
 
 ## Summary
 [basics.summary or tailored summary]
 
 ## Technical Skills
-(CRITICAL: Aggressively curate this section. ONLY include skills explicitly required by or highly relevant to the Job Description. Limit to 15-20 skills total. DO NOT dump the entire KB.)
+(CRITICAL: Curate this section to roughly 15-25 high-signal skills. You MUST include explicit Boolean ATS aliases for required technologies if grounded in the KB.)
 
 **[Category Name 1]:** [Skill 1], [Skill 2], [Skill 3]
 
@@ -28,13 +27,15 @@
 ## Experience
 
 **[company]**
-*[title]* | [dates]
+*[title]*
+[dates]
 - [bullet 1]
 - [bullet 2]
 - [bullet 3]
 
 **[company 2]**
-*[title]* | [dates]
+*[title]*
+[dates]
 - [bullet 1]
 - [bullet 2]
 - [bullet 3]
@@ -55,6 +56,7 @@
 ---
 # INSTRUCTIONS FOR LLM DRAFTER:
 1. YOU MUST FOLLOW THIS EXACT STRUCTURE.
-2. YOU MUST INCLUDE AN EMPTY LINE BREAK BETWEEN EVERY CATEGORY IN THE "Technical Skills" SECTION. This prevents the text from mashing together.
-3. If an array/section is empty (e.g. Projects, Certifications, Industry Expertise), OMIT the section entirely. DO NOT leave empty headers.
-4. Replace the bracketed variables with the actual tailored content.
+2. DO NOT emit `Company | Title | Date` or `Title | Date` on a single line for experience entries. They MUST be on separate lines as shown above to survive ATS parsing.
+3. YOU MUST INCLUDE AN EMPTY LINE BREAK BETWEEN EVERY CATEGORY IN THE "Technical Skills" SECTION.
+4. If an array/section is empty (e.g. Projects, Certifications, Industry Expertise), OMIT the section entirely. DO NOT leave empty headers.
+5. Replace the bracketed variables with the actual tailored content.
