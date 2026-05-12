@@ -86,14 +86,32 @@ async function autoApply(jobUrl, resumePath) {
 
         console.log("[Smart-Applier] Extracting DOM for Praxis Seeker Agent analysis...");
         cleanHTML = await extractCleanFormHTML(targetFrame);
-        const truncatedHTML = cleanHTML.substring(0, 20000); // Expanded token allowance
+        // Drastically shrink HTML so the prompt doesn't get truncated by shell limits
+        const truncatedHTML = cleanHTML.substring(0, 8000); 
 
         const prompt = `
-=== MASTER KNOWLEDGE BASE ===
-${JSON.stringify(kb, null, 2)}
+You are a DOM mapping agent. Your job is to read an HTML form and a JSON configuration of my personal details.
+Return ONLY a valid JSON array mapping my details to the correct CSS selectors in the HTML. Do not return markdown, explanations, or code blocks. ONLY the JSON array.
+
+CRITICAL RULES:
+1. You MUST find and map the file input element for the Resume/CV upload (action: "upload", value: "RESUME_PATH").
+2. You MUST find and map the text input element for the LinkedIn profile URL.
+3. You MUST find and map the input elements for First Name, Last Name, Email, and Phone.
+4. Do not stop early. Provide an exhaustive mapping for all provided personal details.
+
+Example Format:
+[
+  { "selector": "input#first_name", "action": "fill", "value": "Kenton" },
+  { "selector": "select#country", "action": "select", "value": "United States" },
+  { "selector": "textarea#custom_question_123", "action": "fill", "value": "I scaled AI workflows at DexCare..." },
+  { "selector": "input[type='file'][data-field-type='resume']", "action": "upload", "value": "RESUME_PATH" }
+]
 
 === APPLY CONFIG (Compliance/EEOC) ===
 ${JSON.stringify(config.compliance_and_eeoc, null, 2)}
+
+=== MASTER KNOWLEDGE BASE (Truncated for space) ===
+${JSON.stringify({ basics: kb.basics }, null, 2)}
 
 === HTML FORM (Minified) ===
 ${truncatedHTML}
