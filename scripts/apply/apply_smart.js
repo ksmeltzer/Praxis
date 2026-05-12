@@ -70,7 +70,7 @@ async function autoApply(jobUrl, resumePath) {
         if (applyButton) {
              console.log("[Smart-Applier] Clicking 'Apply' button to reveal form...");
              await applyButton.click();
-             await page.waitForTimeout(3000); 
+             await page.waitForTimeout(5000); 
         }
 
         // FIND THE RIGHT FRAME
@@ -104,21 +104,26 @@ ${truncatedHTML}
 
         console.log("[Smart-Applier] Handing DOM and Knowledge Base over to the Praxis Seeker Agent...");
         
-        let resultJSON = '[]';
+                let resultJSON = '[]';
         try {
-            // We use the new praxis-seeker agent profile to give it deep semantic instruction
             const result = execSync(`opencode run --agent praxis-seeker "$(cat ${tempPromptPath})"`, {
                 encoding: 'utf8',
-                stdio: ['pipe', 'pipe', 'ignore']
+                stdio: ['pipe', 'pipe', 'pipe'] // Capture stderr too just in case
             });
+            
+            // Log the raw output for debugging
+            fs.appendFileSync(ERROR_LOG_PATH, `\n[DEBUG] Raw LLM Output:\n${result}\n`);
+            
             const match = result.match(/\[[\s\S]*\]/);
             if (match) {
                 resultJSON = match[0];
             } else {
-                throw new Error("LLM did not return a valid JSON array.");
+                throw new Error("LLM did not return a valid JSON array. See raw output above.");
             }
         } catch (e) {
-            logError(jobUrl, `Agent Execution Failed: ${e.message}`, truncatedHTML);
+            let errorMsg = e.message;
+            if (e.stderr) errorMsg += "\nSTDERR: " + e.stderr.toString();
+            logError(jobUrl, `Agent Execution Failed: ${errorMsg}`, truncatedHTML);
             fs.unlinkSync(tempPromptPath);
             throw new Error("Agent failed to parse the form.");
         }
