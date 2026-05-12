@@ -4,7 +4,7 @@
   "description": "Playwright auto-applier for Praxis",
   "main": "index.js",
   "scripts": {
-    "postinstall": "npx playwright install chromium"
+    "postinstall": "npx playwright install chromium", "apply": "node apply_smart.js"
   },
   "dependencies": {
     "playwright": "^1.42.1"
