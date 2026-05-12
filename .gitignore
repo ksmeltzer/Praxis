@@ -51,3 +51,5 @@ CLAUDE.md
 assets/
 .tmp/
 NEUROPLASTICITY_TEST_CASES.md
+node_modules/
+scripts/sourcing/node_modules/
