@@ -4,9 +4,11 @@
   "description": "Public ATS and LinkedIn scraper for Praxis pipeline",
   "main": "source_linkedin.js",
   "scripts": {
-    "start:linkedin": "node source_linkedin.js"
+    "start:linkedin": "node source_linkedin.js", "start:brave": "node source_brave.js"
   },
   "dependencies": {
-    "linkedin-jobs-scraper": "^3.3.3"
+    "axios": "^1.16.0",
+    "cheerio": "^1.2.0",
+    "linkedin-jobs-scraper": "^18.0.1"
   }
 }
