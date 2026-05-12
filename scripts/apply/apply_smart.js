@@ -33,12 +33,47 @@ async function extractCleanFormHTML(frame) {
 }
 
 async function autoApply(jobUrl, resumePath) {
+        // Read EEOC/Compliance from apply_config
     const configPath = path.join(__dirname, '../../.praxis/data/apply_config.json');
-    if (!fs.existsSync(configPath)) {
-        console.error("[Smart-Applier] Missing apply_config.json");
+    let config = { compliance_and_eeoc: {} };
+    if (fs.existsSync(configPath)) {
+        config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    }
+
+    // Read Personal Info directly from the Master Knowledge Base
+    const kbPath = path.join(__dirname, '../../.praxis/data/knowledge_base.json');
+    if (!fs.existsSync(kbPath)) {
+        console.error("[Smart-Applier] Missing knowledge_base.json");
         return;
     }
-    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    const kb = JSON.parse(fs.readFileSync(kbPath, 'utf8'));
+    
+    // Split name into first and last
+    const nameParts = (kb.basics.name || '').split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+
+    // Extract portfolio/website
+    let portfolioUrl = '';
+    if (kb.basics.portfolio_links && kb.basics.portfolio_links.length > 0) {
+        // Try to find a personal site or github
+        const site = kb.basics.portfolio_links.find(l => !l.name.toLowerCase().includes('github')) || kb.basics.portfolio_links[0];
+        portfolioUrl = site.url;
+    }
+
+    // Merge everything into the final JSON sent to the LLM
+    const mergedData = {
+        personal_info: {
+            first_name: firstName,
+            last_name: lastName,
+            email: kb.basics.email,
+            phone: kb.basics.phone,
+            linkedin: kb.basics.linkedin,
+            github: kb.basics.github || portfolioUrl,
+            portfolio_website: portfolioUrl
+        },
+        compliance_and_eeoc: config.compliance_and_eeoc
+    };
 
     console.log(`[Smart-Applier] Launching browser to map and apply at: ${jobUrl}`);
     const browser = await chromium.launch({ headless: false }); 
@@ -79,7 +114,7 @@ You are a DOM mapping agent. Your job is to read an HTML form and a JSON configu
 Return ONLY a valid JSON array mapping my details to the correct CSS selectors in the HTML. Do not return markdown, explanations, or code blocks. ONLY the JSON array.
 
 === MY DETAILS ===
-${JSON.stringify(config, null, 2)}
+${JSON.stringify(mergedData, null, 2)}
 
 === HTML FORM (Minified) ===
 ${truncatedHTML}
