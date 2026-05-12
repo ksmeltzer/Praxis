@@ -3,22 +3,30 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
+// Setup Error Logging
+const ERROR_LOG_PATH = path.join(__dirname, '../../.praxis/data/apply_errors.log');
+function logError(jobUrl, issue, htmlContext = '') {
+    const timestamp = new Date().toISOString();
+    let logEntry = `\n[${timestamp}] FAILED: ${jobUrl}\nIssue: ${issue}\n`;
+    if (htmlContext) {
+        logEntry += `DOM Snippet (First 500 chars): ${htmlContext.substring(0, 500)}\n`;
+    }
+    logEntry += `--------------------------------------------------\n`;
+    fs.appendFileSync(ERROR_LOG_PATH, logEntry);
+    console.error(`[Smart-Applier] Error logged to .praxis/data/apply_errors.log: ${issue}`);
+}
+
 async function extractCleanFormHTML(frame) {
     return await frame.evaluate(() => {
-        // Clone the body to avoid destroying the actual page
         const clone = document.body.cloneNode(true);
-        
-        // Remove junk that eats up LLM tokens
         const elementsToRemove = clone.querySelectorAll('script, style, svg, path, img, nav, header, footer, meta, link, noscript');
         elementsToRemove.forEach(el => el.remove());
 
-        // Focus just on forms or main application containers if possible
         const form = clone.querySelector('form') || clone;
         
-        // Strip out excessive attributes to save tokens
         const allElements = form.querySelectorAll('*');
         allElements.forEach(el => {
-            const keepAttrs = ['id', 'name', 'type', 'class', 'placeholder', 'value', 'for', 'data-field-type'];
+            const keepAttrs = ['id', 'name', 'type', 'class', 'placeholder', 'value', 'for', 'data-field-type', 'aria-label'];
             for (let i = el.attributes.length - 1; i >= 0; i--) {
                 const attrName = el.attributes[i].name;
                 if (!keepAttrs.includes(attrName)) {
@@ -27,73 +35,46 @@ async function extractCleanFormHTML(frame) {
             }
         });
 
-        // Minify HTML
         return form.innerHTML.replace(/\s+/g, ' ').trim();
     });
 }
 
 async function autoApply(jobUrl, resumePath) {
-        // Read EEOC/Compliance from apply_config
-    const configPath = path.join(__dirname, '../../.praxis/data/apply_config.json');
-    let config = { compliance_and_eeoc: {} };
-    if (fs.existsSync(configPath)) {
-        config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    }
-
-    // Read Personal Info directly from the Master Knowledge Base
+    // 1. Load the Master Knowledge Base (Full Context for the Agent)
     const kbPath = path.join(__dirname, '../../.praxis/data/knowledge_base.json');
     if (!fs.existsSync(kbPath)) {
         console.error("[Smart-Applier] Missing knowledge_base.json");
         return;
     }
     const kb = JSON.parse(fs.readFileSync(kbPath, 'utf8'));
-    
-    // Split name into first and last
-    const nameParts = (kb.basics.name || '').split(' ');
-    const firstName = nameParts[0] || '';
-    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
 
-    // Extract portfolio/website
-    let portfolioUrl = '';
-    if (kb.basics.portfolio_links && kb.basics.portfolio_links.length > 0) {
-        // Try to find a personal site or github
-        const site = kb.basics.portfolio_links.find(l => !l.name.toLowerCase().includes('github')) || kb.basics.portfolio_links[0];
-        portfolioUrl = site.url;
+    // 2. Load the Compliance Config
+    const configPath = path.join(__dirname, '../../.praxis/data/apply_config.json');
+    let config = { compliance_and_eeoc: {} };
+    if (fs.existsSync(configPath)) {
+        config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
     }
-
-    // Merge everything into the final JSON sent to the LLM
-    const mergedData = {
-        personal_info: {
-            first_name: firstName,
-            last_name: lastName,
-            email: kb.basics.email,
-            phone: kb.basics.phone,
-            linkedin: kb.basics.linkedin,
-            github: kb.basics.github || portfolioUrl,
-            portfolio_website: portfolioUrl
-        },
-        compliance_and_eeoc: config.compliance_and_eeoc
-    };
 
     console.log(`[Smart-Applier] Launching browser to map and apply at: ${jobUrl}`);
     const browser = await chromium.launch({ headless: false }); 
     const context = await browser.newContext();
     const page = await context.newPage();
 
+    let targetFrame = null;
+    let cleanHTML = '';
+
     try {
         await page.goto(jobUrl, { waitUntil: 'networkidle' });
         
-        // Sometimes ATS are behind an "Apply Now" button.
         const applyButton = await page.$('a[href*="apply"], button:has-text("Apply")');
         if (applyButton) {
              console.log("[Smart-Applier] Clicking 'Apply' button to reveal form...");
              await applyButton.click();
-             await page.waitForTimeout(3000); // Wait for potential iframe or modal load
+             await page.waitForTimeout(3000); 
         }
 
         // FIND THE RIGHT FRAME
-        // Airbnb and others embed Greenhouse/Lever forms in an iframe
-        let targetFrame = page.mainFrame();
+        targetFrame = page.mainFrame();
         for (const frame of page.frames()) {
             const html = await frame.content();
             if (html.toLowerCase().includes('resume') || html.includes('type="file"')) {
@@ -103,72 +84,66 @@ async function autoApply(jobUrl, resumePath) {
             }
         }
 
-        console.log("[Smart-Applier] Extracting DOM for Copilot analysis...");
-        const cleanHTML = await extractCleanFormHTML(targetFrame);
-
-        // Keep HTML to a reasonable token size (truncate if massive)
-        const truncatedHTML = cleanHTML.substring(0, 15000); 
+        console.log("[Smart-Applier] Extracting DOM for Praxis Seeker Agent analysis...");
+        cleanHTML = await extractCleanFormHTML(targetFrame);
+        const truncatedHTML = cleanHTML.substring(0, 20000); // Expanded token allowance
 
         const prompt = `
-You are a DOM mapping agent. Your job is to read an HTML form and a JSON configuration of my personal details.
-Return ONLY a valid JSON array mapping my details to the correct CSS selectors in the HTML. Do not return markdown, explanations, or code blocks. ONLY the JSON array.
+=== MASTER KNOWLEDGE BASE ===
+${JSON.stringify(kb, null, 2)}
 
-=== MY DETAILS ===
-${JSON.stringify(mergedData, null, 2)}
+=== APPLY CONFIG (Compliance/EEOC) ===
+${JSON.stringify(config.compliance_and_eeoc, null, 2)}
 
 === HTML FORM (Minified) ===
 ${truncatedHTML}
-
-=== OUTPUT INSTRUCTIONS ===
-Return a JSON array where each object represents an action to take on the form.
-Valid actions: "fill", "select", "upload"
-For select elements, the "value" must match one of the <option> values or visible text in the HTML.
-
-CRITICAL RULES:
-1. You MUST find and map the file input element for the Resume/CV upload (action: "upload", value: "RESUME_PATH").
-2. You MUST find and map the text input element for the LinkedIn profile URL.
-3. You MUST find and map the input elements for First Name, Last Name, Email, and Phone.
-4. Do not stop early. Provide an exhaustive mapping for all provided personal details that have a corresponding field in the HTML.
-
-Example Format:
-[
-  { "selector": "input#first_name", "action": "fill", "value": "Kenton" },
-  { "selector": "input[name='job_application[email]']", "action": "fill", "value": "kenton@example.com" },
-  { "selector": "select#eeoc_gender", "action": "select", "value": "Decline to self-identify" },
-  { "selector": "input[type='file']", "action": "upload", "value": "RESUME_PATH" }
-]
 `;
 
         const tempPromptPath = path.join(__dirname, `temp_dom_prompt_${Date.now()}.txt`);
         fs.writeFileSync(tempPromptPath, prompt);
 
-        console.log("[Smart-Applier] Asking Headless Copilot to map the DOM. This takes 5-10 seconds...");
+        console.log("[Smart-Applier] Handing DOM and Knowledge Base over to the Praxis Seeker Agent...");
         
         let resultJSON = '[]';
         try {
-            const result = execSync(`opencode run --pure "$(cat ${tempPromptPath})"`, {
+            // We use the new praxis-seeker agent profile to give it deep semantic instruction
+            const result = execSync(`opencode run --agent praxis-seeker "$(cat ${tempPromptPath})"`, {
                 encoding: 'utf8',
                 stdio: ['pipe', 'pipe', 'ignore']
             });
             const match = result.match(/\[[\s\S]*\]/);
             if (match) {
                 resultJSON = match[0];
+            } else {
+                throw new Error("LLM did not return a valid JSON array.");
             }
         } catch (e) {
-            console.error("[Smart-Applier] Copilot execution failed:", e.message);
+            logError(jobUrl, `Agent Execution Failed: ${e.message}`, truncatedHTML);
+            fs.unlinkSync(tempPromptPath);
+            throw new Error("Agent failed to parse the form.");
         }
         fs.unlinkSync(tempPromptPath);
 
-        const actions = JSON.parse(resultJSON);
-        console.log(`[Smart-Applier] Copilot returned ${actions.length} form mapping actions. Executing...`);
+        let actions;
+        try {
+            actions = JSON.parse(resultJSON);
+        } catch (e) {
+            logError(jobUrl, `JSON Parse Error from Agent output: ${resultJSON}`, truncatedHTML);
+            throw new Error("Agent returned invalid JSON.");
+        }
+
+        console.log(`[Smart-Applier] Praxis Seeker returned ${actions.length} form mapping actions. Executing...`);
 
         // EXECUTE THE MAPPED ACTIONS
+        let successCount = 0;
+        let failCount = 0;
+
         for (const action of actions) {
             try {
-                // Ensure selector exists in frame
                 const elementExists = await targetFrame.$(action.selector);
                 if (!elementExists) {
                     console.log(`  -> Skipping ${action.selector} (Not found in DOM)`);
+                    failCount++;
                     continue;
                 }
 
@@ -179,22 +154,40 @@ Example Format:
                     await targetFrame.selectOption(action.selector, { label: action.value }).catch(() => targetFrame.selectOption(action.selector, action.value));
                     console.log(`  -> Selected ${action.value} on ${action.selector}`);
                 } else if (action.action === 'upload') {
-                    if (fs.existsSync(resumePath)) {
+                    if (action.value === 'RESUME_PATH' && fs.existsSync(resumePath)) {
                         await targetFrame.setInputFiles(action.selector, resumePath);
                         console.log(`  -> Uploaded Resume to ${action.selector}`);
                     }
+                    // Future proofing for cover letters
+                    else if (action.value === 'COVER_LETTER_PATH') {
+                        const clPath = resumePath.replace('_Resume.pdf', '_Cover_Letter.pdf');
+                        if (fs.existsSync(clPath)) {
+                            await targetFrame.setInputFiles(action.selector, clPath);
+                            console.log(`  -> Uploaded Cover Letter to ${action.selector}`);
+                        }
+                    }
                 }
+                successCount++;
             } catch (err) {
-                console.log(`  -> Failed to execute action on ${action.selector}: ${err.message.split('\\n')[0]}`);
+                console.log(`  -> Failed to execute action on ${action.selector}: ${err.message.split('\n')[0]}`);
+                failCount++;
             }
         }
 
-        console.log("\n[Smart-Applier] Smart mapping complete. Browser remains open for final user review and Submit.");
+        console.log(`\n[Smart-Applier] Execution complete. Success: ${successCount}, Failed: ${failCount}.`);
+        if (failCount > Math.max(2, actions.length * 0.3)) {
+             logError(jobUrl, `High failure rate during execution (${failCount} failed actions). Selectors might be incorrect or elements hidden.`, truncatedHTML);
+        }
+
+        console.log("[Smart-Applier] Browser remains open for final user review and Submit.");
         // Leave the browser open
         await new Promise(() => {});
 
     } catch (error) {
-        console.error("[Smart-Applier] Error:", error.message);
+        console.error("[Smart-Applier] Critical Error:", error.message);
+        if (!error.message.includes("Agent failed to parse")) {
+            logError(jobUrl, `Playwright Execution Error: ${error.message}`, cleanHTML);
+        }
         await browser.close();
     }
 }
