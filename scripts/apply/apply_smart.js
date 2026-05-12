@@ -124,6 +124,12 @@ Return a JSON array where each object represents an action to take on the form.
 Valid actions: "fill", "select", "upload"
 For select elements, the "value" must match one of the <option> values or visible text in the HTML.
 
+CRITICAL RULES:
+1. You MUST find and map the file input element for the Resume/CV upload (action: "upload", value: "RESUME_PATH").
+2. You MUST find and map the text input element for the LinkedIn profile URL.
+3. You MUST find and map the input elements for First Name, Last Name, Email, and Phone.
+4. Do not stop early. Provide an exhaustive mapping for all provided personal details that have a corresponding field in the HTML.
+
 Example Format:
 [
   { "selector": "input#first_name", "action": "fill", "value": "Kenton" },
