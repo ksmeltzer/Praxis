@@ -1,0 +1,21 @@
+{
+  "applications": [
+    {
+      "company": "The Baldwin Group",
+      "role": "Principal, AI Architect",
+      "url": "https://www.linkedin.com/jobs/view/principal-ai-architect-at-the-baldwin-group-4405133875",
+      "date_forged": "2026-05-13",
+      "state": "FAILED",
+      "compensation": "Not disclosed — market est. $220K–$260K base",
+      "assets": "assets/TheBaldwinGroup/",
+      "error_reason": "Agent failed to navigate past LinkedIn Apply redirect, confused Apply with Submit, and hallucinated form completion."
+    },
+    {
+      "company": "Airbnb",
+      "role": "Principal Software Engineer, Performance",
+      "url": "https://careers.airbnb.com/positions/7826679/",
+      "date_applied": "2026-05-12",
+      "state": "APPLIED"
+    }
+  ]
+}
