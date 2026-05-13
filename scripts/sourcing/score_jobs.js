@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const { isDuplicate } = require('./dedupe_helper');
 
 const STAGING_DIR = path.join(__dirname, '../../.praxis/staging');
 const QUEUE_DIR = path.join(__dirname, '../../.praxis/queue');
@@ -24,6 +25,21 @@ function evaluateJob(filePath, fileName, params) {
     const scrapedDate = extractDateFromMarkdown(jobContent);
     const ageDays = (new Date() - scrapedDate) / (1000 * 60 * 60 * 24);
     
+    // Extract company and title for deduping
+    const companyMatch = jobContent.match(/company:\s*"?([^"\n]+)"?/);
+    const titleMatch = jobContent.match(/title:\s*"?([^"\n]+)"?/);
+    const company = companyMatch ? companyMatch[1].trim() : "";
+    const title = titleMatch ? titleMatch[1].trim() : "";
+
+    if (isDuplicate(company, title)) {
+        return {
+            pass_fail: false,
+            score: 0,
+            compensation_extracted: "Hidden",
+            match_rationale: `HARD FAIL: Duplicate - Already applied to this role at ${company}.`
+        };
+    }
+
     if (ageDays > maxAgeDays) {
         return {
             pass_fail: false,
