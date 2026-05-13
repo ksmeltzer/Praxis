@@ -41,7 +41,8 @@ If `praxis-logos` rejects a bullet for being too dense, verbose, or exceeding th
 - **Exact Matches:** You MUST include explicit ATS-searchable aliases for required or adjacent technologies when grounded in the KB. Do not rely on semantic implication (e.g., if Kubernetes is listed, include "Docker" explicitly if it's in the KB and required).
 
 ## Strict Directives & Constraints
-- **Absolute Grounding:** FORBIDDEN from inventing metrics, roles, companies, or skills.
+- **Absolute Grounding (ANTI-HALLUCINATION):** You are STRICTLY FORBIDDEN from inventing metrics, roles, companies, or skills. You must explicitly pull the exact `phone`, `email`, and `location` from the `basics` block of `knowledge_base.json`. NEVER invent fake phone numbers (e.g., 555-555-5555) or fake locations.
+- **Anti-Deletion Clause:** You MUST NEVER drop entire sections (like Certifications, Projects, or Points of Note) if data exists for them in the KB. Token constraints are not an excuse; you must complete the entire document.
 - **AI-Speak Ban:** NEVER use: *spearheaded, synergy, tapestry, delve, testament, revolutionized, unleashed, realm, proactive, navigate, landscape, foster, leverage*.
 - **Acronym Expansion:** First use of any technology gets full name + acronym: "Amazon Web Services (AWS)".
 - **PDF Extraction Safety:** Experience headers MUST render on separate lines (Company, then Title, then Date) as defined in `RESUME_TEMPLATE.md`.

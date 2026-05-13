@@ -44,6 +44,12 @@ Beyond just getting the interview, Praxis helps you pass it. For every targeted 
 *"Which version of my resume did I send to AcmeCorp again?"* 
 Praxis automatically organizes your generated resumes, tailored cover letters, and Interview Prep Sheets into dedicated company folders (e.g., `assets/AcmeCorp/`). You can instantly pull up the folder to see exactly what the job description was, what resume you sent, and the mapped talking points.
 
+### 7. 🤖 Automated Job Sourcing & Scoring
+Praxis includes a headless sourcing engine (`praxis-sourcer`) that aggregates technical roles from platforms like LinkedIn, Hacker News, and We Work Remotely. It utilizes a local Headless LLM Gatekeeper to instantly score roles against your customized `search_parameters.json`—filtering out low-comp roles, dealbreaker tech stacks, and hybrid requirements while highlighting high-value multi-pliers.
+
+### 8. 🌐 Chrome MCP Application Automation
+Stop filling out repetitive forms. The `praxis-seeker` agent uses Chrome DevTools MCP and high-speed JavaScript injection to safely navigate ATS systems like Workday and Greenhouse. It automatically fills in demographic data from `apply_config.json`, auto-accepts standard legal agreements, explicitly rejects restrictive covenants (like Non-Competes), and pre-stages the final submission button for a human-in-the-loop review.
+
 ---
 
 ## 🏗️ Architecture & Commands

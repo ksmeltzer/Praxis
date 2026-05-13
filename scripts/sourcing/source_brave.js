@@ -27,9 +27,13 @@ if (!fs.existsSync(STAGING_DIR)) {
 
 // Queries designed to hit the major open ATS platforms for high-level AI/SWE roles
 const QUERIES = [
-    'site:boards.greenhouse.io ("Principal Software" OR "Staff Software" OR "Principal AI" OR "Staff AI") "Remote"',
-    'site:jobs.lever.co ("Principal Software" OR "Staff Software" OR "Principal AI" OR "Staff AI") "Remote"',
-    'site:jobs.ashbyhq.com ("Principal Software" OR "Staff Software" OR "Principal AI" OR "Staff AI") "Remote"'
+    'site:boards.greenhouse.io "Principal AI" "Remote"',
+    'site:boards.greenhouse.io "Staff AI" "Remote"',
+    'site:boards.greenhouse.io "AI Architect" "Remote"',
+    'site:boards.greenhouse.io "Machine Learning" "Remote" ("Principal" OR "Staff")',
+    'site:jobs.lever.co "Principal AI" "Remote"',
+    'site:jobs.lever.co "Staff Machine Learning" "Remote"',
+    'site:boards.greenhouse.io "LLM" "Remote" ("Principal" OR "Staff")'
 ];
 
 async function fetchBraveResults(query) {
@@ -39,7 +43,7 @@ async function fetchBraveResults(query) {
             params: {
                 q: query,
                 count: 10,
-                freshness: 'pw'
+                freshness: 'pm' // widened to past month for testing
             },
             headers: {
                 'Accept': 'application/json',
@@ -113,7 +117,7 @@ async function run() {
     
     for (const query of QUERIES) {
         const results = await fetchBraveResults(query);
-        
+        console.log(`[Brave API] Returned ${results.length} results.`);
         // Critical: Sleep for 1.5 seconds between Brave API queries to avoid 429 Rate Limits
         await sleep(1500);
 

@@ -134,6 +134,7 @@ Praxis uses a single command with three modes. The orchestrator dispatches based
 /praxis resume       → GENERATE MODE (Explicitly generate baseline resume)
 /praxis <text>       → KNOWLEDGE MODE (Argument is free text)
 /praxis <url>        → FORGE MODE    (Argument starts with http:// or https://)
+/praxis apply <url>  → APPLY MODE    (Automated application submission via MCP)
 /praxis search       → SOURCE MODE   (Execute job search and queue high-scoring JDs)
 /praxis track        → TRACK MODE    (View pipeline status or update a job's state)
 ```
@@ -336,15 +337,16 @@ DIRECTIVE_VIOLATIONS: [list or "None"]
 3. **Company Context Harvesting (Deep Research)**: Do not just trust the JD text. You MUST perform deep research on the target company using available tools (like `webfetch` or LLM search capabilities) to understand their core business model, target market, primary products, and underlying industry (e.g., discovering a company is a Web3/Crypto company even if the specific role is just "AI Engineer"). Use this macro-context to aggressively pull forward adjacent skills from the KB that align with the company's DNA.
 3. **Initialize**: Load `knowledge_base.json` and `voice_profile`.
 4. **Apply User Rules**: Load `rules.json`. Apply `date_overrides`, `company_replacements`, and `injected_roles` to the working copy.
-5. **Skill Gap Interview (Fitment Session)**: Compare JD requirements against KB skills. For each missing required skill, PAUSE and prompt the user ONE AT A TIME: *"The job requires [Skill]. Do you have experience with this? If so, at which company, and briefly, how did you use it?"* Wait for the user to answer before asking about the next missing skill. Do not blob multiple skills into a single question. If the user provides a valid example:
-    - Pass their raw description to `praxis-pathos` to draft a new resume bullet in the user's `voice_profile`.
-    - Pass the drafted bullet to `praxis-logos` to audit and refine.
-    - Once approved, PERMANENTLY save the new skill to the global `skills` object, append it to that specific role's `skills_used` array, AND append the newly wordsmithed bullet to that role's `bullets` array in `knowledge_base.json`. This ensures the KB continually grows stronger with concrete, well-crafted evidence.
+5. **Skill Gap Handling (Interactive vs. Non-Interactive)**: Compare JD requirements against KB skills.
+    - **Interactive Mode**: If running in an interactive chat session, PAUSE and prompt the user ONE AT A TIME: *"The job requires [Skill]. Do you have experience with this? If so, at which company, and briefly, how did you use it?"* Wait for the user to answer before asking about the next missing skill. If the user provides a valid example, pass their raw description to `praxis-pathos` to draft a new resume bullet, audit it with `praxis-logos`, and PERMANENTLY save it to the global `knowledge_base.json` (`skills` object, `skills_used` array, and `bullets` array).
+    - **Non-Interactive / Auto-Apply Mode**: If the user asks you to run headlessly, process a batch of jobs, or if you are running in an environment where you cannot block on user input, **DO NOT PAUSE OR PROMPT**. Instead:
+        1. Log the missing required skills to a central file: `.praxis/data/skill_gaps.log` (Format: `[Date] | Company: [Company] | Role: [Role] | URL: [URL] | Missing Skills: [Skill1, Skill2]`).
+        2. Proceed with generating the tailored resume doing the absolute best you can with the existing knowledge base. Do not invent experience to fill the gap.
 6. **Compensation Intelligence Lookup (MANDATORY)**: The Orchestrator MUST scan the job description text for explicit salary bands. If none exist in the JD, autonomously look up compensation data using tools (like `webfetch` to `https://h1bdata.info/index.php?em=[Company]&job=[Role]`). You MUST pass this comp data (or the failure to find it) explicitly to `praxis-pathos`.
 7. **Relevance Filter**: Filter KB to entries semantically relevant to the JD. Drop roles older than 15 years unless uniquely relevant. **INDUSTRY SPECIFIC FILTERING:** When creating the filtered KB for tailoring, completely EXCLUDE any `industry_expertise` categories UNLESS the target Job Description is strictly within that same industry. Industry specific skills must only appear on resumes tailored to that exact industry.
 8. **Adversarial Loop (MAX_ITERATIONS = 3)**:
-    - **Phase 1 (Draft)**: Invoke `praxis-pathos` with JD analysis, filtered KB, `voice_profile`, and `ATS_PARSER_RULES.md`.
-    - **Phase 2 (Audit)**: Invoke `praxis-logos` with the draft, FULL `knowledge_base.json`, `voice_profile`, and `ATS_PARSER_RULES.md`.
+    - **Phase 1 (Draft)**: Use the `task` tool to invoke `praxis-pathos` with the command: `Generate a tailored resume and cover letter for [Company] using .praxis/data/knowledge_base.json and the JD at [URL/Path]. Output to assets/[Company]/...` (You do NOT need to write ad-hoc bash scripts to do this. Trust the agent to read the necessary files natively).
+    - **Phase 2 (Audit)**: Use the `task` tool to invoke `praxis-logos` with the draft path.
     - **Phase 3 (Iterate)**: If `REJECTED`, feed issues back to pathos. If not approved by iteration 3, present remaining issues to user.
 9. **Output**: Create a directory for the target company (`assets/{TargetCompany}/`). Save the tailored Markdown resume to `assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Resume.md`. (CRITICAL: `{TargetCompany}` MUST be the actual name of the company from the target job req, e.g., `Microsoft`).
 10. **Generate PDF**: Run `npx md-to-pdf "assets/{TargetCompany}/{TargetCompany}_{First}_{Last}_Resume.md" --stylesheet .agents/skills/praxis/resume.css --config-file scripts/mdpdf.config.js` (if available in the environment) or use `pandoc` to convert the markdown to PDF. DO NOT delete the Markdown file; leave it for the user to edit manually if desired.
@@ -374,7 +376,11 @@ DIRECTIVE_VIOLATIONS: [list or "None"]
    - **Domain Multipliers**: Specific niche domains (e.g., F1, Ballistics) that drastically increase a job's priority score.
    - **Tech Stack Multipliers**: Highly preferred technologies (e.g., Rust, Go) vs. Dealbreaker technologies (e.g., .NET).
    - **Overrides**: "Fuck You" money thresholds (e.g., $500k+) that bypass all dealbreakers.
-4. Finalize the schema and initialize the `.praxis/queue/` directory for incoming scraped jobs.
+4. **Demographics & Compliance Interview**: Sequentially interview the user to populate the `.praxis/data/apply_config.json` with required compliance data (which is necessary for the auto-applier to work without throwing errors). Ask about and collect:
+   - Full Street Address, City, State, Zip/Postal Code, Country
+   - How did you hear about this job (e.g., "Company Website", "LinkedIn")
+   - Gender, Race, Veteran Status, Disability Status (ensure you tell them they can choose "Decline to answer" or "Decline to self-identify")
+5. Finalize the schema and initialize the `.praxis/queue/` directory for incoming scraped jobs.
 
 ---
 
@@ -394,7 +400,7 @@ DIRECTIVE_VIOLATIONS: [list or "None"]
 
 ---
 
-### Mode 6: Application Tracking (`/praxis track`)
+### Mode 7: Application Tracking (`/praxis track`)
 
 **Purpose**: Manage the internal Applicant Tracking System (ATS) lifecycle for all sourced and forged jobs.
 
@@ -403,6 +409,14 @@ DIRECTIVE_VIOLATIONS: [list or "None"]
 2. Display a dashboard of current jobs in the pipeline grouped by state: `QUEUED`, `FORGED`, `APPLIED`, `INTERVIEWING`, `REJECTED`, `OFFER`.
 3. Allow the user to transition a job's state (e.g., "Mark target company X as APPLIED").
 4. **Implicit Tracking Rule**: When the Orchestrator successfully completes Mode 3 (Forge) for a URL or queued Markdown file, it MUST automatically create or update an entry in `applications.json` setting its state to `FORGED`, capturing the Company Name, Role, URL, Date, and parsed Compensation.
+
+**Purpose**: Agentically fill out the ATS job application using Chrome DevTools MCP.
+
+**Execution Flow**:
+1. Invoke the `praxis-seeker` agent and pass it the target `<url>`.
+2. The agent will launch an isolated browser session via `chrome-devtools-mcp` to autonomously interact with the page.
+3. The agent will exhaustively fill out all personal info, EEOC demographic data, custom questions, and upload the generated Resume and Cover Letter.
+4. The agent will intentionally STOP before clicking "Submit", allowing the user to review the screen and manually click the final submit button.
 
 ---
 

@@ -1,17 +1,15 @@
-const { LinkedinScraper, events } = require('linkedin-jobs-scraper');
+const { LinkedinScraper, events, timeFilter } = require('linkedin-jobs-scraper');
 const fs = require('fs');
 const path = require('path');
 
-// Target directory for scraped raw jobs
 const STAGING_DIR = path.join(__dirname, '../../.praxis/staging');
 if (!fs.existsSync(STAGING_DIR)) {
     fs.mkdirSync(STAGING_DIR, { recursive: true });
 }
 
-// Each scraper instance is run with anonymous proxy-like public settings
 const scraper = new LinkedinScraper({
     headless: "new",
-    slowMo: 1000, // Very slow to avoid rate limits
+    slowMo: 100, // Speeding it up a tiny bit for the test
     args: [
         "--lang=en-US",
         "--no-sandbox",
@@ -20,7 +18,6 @@ const scraper = new LinkedinScraper({
     ]
 });
 
-// Capture jobs and save them as markdown stubs for Praxis to process
 scraper.on(events.scraper.data, (data) => {
     console.log(`[Praxis Sourcing] Found Job: ${data.title} at ${data.company}`);
     
@@ -49,14 +46,13 @@ ${data.description}
 });
 
 scraper.on(events.scraper.error, (err) => {
-    console.error(`[Praxis Sourcing] Error: ${err}`);
+    console.error(`[Praxis Sourcing] Error:`, err);
 });
 
 scraper.on(events.scraper.end, () => {
-    console.log('[Praxis Sourcing] Scraping complete. Jobs waiting in .praxis/staging/ for LLM scoring.');
+    console.log('[Praxis Sourcing] Scraping complete. Jobs waiting in .praxis/staging/');
 });
 
-// Start the scrape: Target Principal/Staff AI roles, Remote
 scraper.run([
     {
         query: "Staff AI Engineer",
@@ -64,9 +60,7 @@ scraper.run([
             locations: ["United States"],
             filters: {
                 remote: true,
-                time: {
-                    range: "r86400" // Last 24 hours
-                }
+                time: "r86400"
             }
         }
     },
@@ -76,14 +70,12 @@ scraper.run([
             locations: ["United States"],
             filters: {
                 remote: true,
-                time: {
-                    range: "r86400" // Last 24 hours
-                }
+                time: "r86400"
             }
         }
     }
-], { // Global options
+], {
     locations: ["United States"],
-    limit: 15, // Only grab the top 15 newest matching jobs
-    optimize: true // Skip loading images/CSS for speed and stealth
+    limit: 5,
+    optimize: true
 });

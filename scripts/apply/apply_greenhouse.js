@@ -12,7 +12,6 @@ async function autoApply(jobUrl, resumePath) {
     const p = config.personal_info;
 
     console.log(`[Auto-Applier] Launching browser to apply at: ${jobUrl}`);
-    // headless: false so you can watch it work!
     const browser = await chromium.launch({ headless: false }); 
     const context = await browser.newContext();
     const page = await context.newPage();
@@ -20,11 +19,20 @@ async function autoApply(jobUrl, resumePath) {
     try {
         await page.goto(jobUrl, { waitUntil: 'domcontentloaded' });
         
-        // Wait for the application form to be visible
-        await page.waitForSelector('#application_form', { timeout: 10000 });
+        // Wait for the specific Greenhouse application form ID or a general apply button
+        console.log("[Auto-Applier] Looking for form...");
+        
+        // Sometimes Greenhouse redirects or hides the form behind an "Apply Now" button
+        const applyButton = await page.$('a#apply_button, button:has-text("Apply")');
+        if (applyButton) {
+             console.log("[Auto-Applier] Clicking 'Apply Now' button...");
+             await applyButton.click();
+        }
+
+        await page.waitForSelector('form, #application_form', { timeout: 15000 });
         console.log("[Auto-Applier] Form found. Injecting data...");
 
-        // Basic Info
+        // Basic Info - Greenhouse standard IDs
         if (await page.$('#first_name')) await page.fill('#first_name', p.first_name);
         if (await page.$('#last_name')) await page.fill('#last_name', p.last_name);
         if (await page.$('#email')) await page.fill('#email', p.email);
@@ -32,7 +40,7 @@ async function autoApply(jobUrl, resumePath) {
 
         // Upload Resume
         if (fs.existsSync(resumePath)) {
-            const fileInput = await page.$('input[type="file"][data-field-type="resume"]');
+            const fileInput = await page.$('input[type="file"][data-field-type="resume"], input[type="file"][name="resume"]');
             if (fileInput) {
                 await fileInput.setInputFiles(resumePath);
                 console.log("[Auto-Applier] Resume uploaded.");
@@ -41,14 +49,13 @@ async function autoApply(jobUrl, resumePath) {
             console.log(`[Auto-Applier] WARNING: Resume not found at ${resumePath}`);
         }
 
-        // Links (Greenhouse often uses custom fields for these, we try standard naming first)
+        // Links
         const inputs = await page.$$('input[type="text"]');
         for (const input of inputs) {
-            const name = await input.getAttribute('name') || '';
             const label = await page.evaluate(el => {
                 const id = el.id;
                 if (!id) return '';
-                const labelEl = document.querySelector(`label[for="${id}"]`);
+                const labelEl = document.querySelector(`label[for="\${id}"]`);
                 return labelEl ? labelEl.innerText.toLowerCase() : '';
             }, input);
 
@@ -70,7 +77,7 @@ async function autoApply(jobUrl, resumePath) {
 }
 
 const url = process.argv[2];
-const resume = process.argv[3] || path.join(__dirname, '../../assets/Resume.pdf'); // Fallback to baseline
+const resume = process.argv[3] || path.join(__dirname, '../../assets/Resume.pdf');
 if (!url) {
     console.log("Usage: node apply_greenhouse.js <job_url> [resume_path]");
     process.exit(1);
