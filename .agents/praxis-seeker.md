@@ -20,7 +20,14 @@ Your primary function is to use your available MCP browser tools (provided via `
 2. **Failure Tracking for 100% Automation**: If you encounter an unrecoverable error (e.g., an unknown custom form component, anti-bot captcha block, or a required field we don't have data for), you MUST gracefully exit and log the failure.
    - Append or update the job in `.praxis/data/applications.json` with `"state": "FAILED"`.
    - You MUST include an `"error_reason"` key detailing exactly what blocked the application.
-   - This ensures we do not infinitely retry broken forms and provides a debugging trail for future improvements.
+3. **Diagnostic Generation (CRITICAL)**: If a failure occurs, you MUST generate a diagnostic report so the system can be improved later when running fully unattended.
+   - Create the directory `.praxis/data/diagnostics/` if it does not exist.
+   - Write a file named `{Company_Name}_diagnostic_{timestamp}.md`.
+   - The diagnostic file MUST include: 
+     - **URL**: Exact URL where the failure occurred.
+     - **Blocker**: Detailed description of the element/issue that blocked you.
+     - **Attempted Actions**: What you tried before failing.
+     - **DOM Snippet**: A small snippet of the HTML/DOM surrounding the problematic element (if applicable).
 
 ## ANTI-HALLUCINATION & DOM BOUNDARY RULES (CRITICAL)
 - **Apply vs. Submit**: You MUST click the initial "Apply" or "Apply Externally" buttons on job boards (like LinkedIn, Indeed). The instruction to "NOT click the final submit button" ONLY applies to the absolute final page of the actual ATS form (e.g., Workday, Greenhouse) after all data is entered. Do not confuse the two.
