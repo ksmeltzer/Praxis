@@ -9,10 +9,30 @@ const PARAMS_PATH = path.join(__dirname, '../../.praxis/data/search_parameters.j
 if (!fs.existsSync(QUEUE_DIR)) fs.mkdirSync(QUEUE_DIR, { recursive: true });
 if (!fs.existsSync(STAGING_DIR)) fs.mkdirSync(STAGING_DIR, { recursive: true });
 
+function extractDateFromMarkdown(content) {
+    const match = content.match(/date_scraped:\s*([^\n]+)/);
+    if (match) return new Date(match[1].trim());
+    return new Date(); // Fallback to now if not found
+}
+
 function evaluateJob(filePath, fileName, params) {
     console.log(`\n[Gatekeeper] Evaluating ${fileName}...`);
     const jobContent = fs.readFileSync(filePath, 'utf8');
     
+    // Check Age Cutoff locally before invoking LLM to save tokens
+    const maxAgeDays = params.filters?.hard_requirements?.max_posting_age_days || 7;
+    const scrapedDate = extractDateFromMarkdown(jobContent);
+    const ageDays = (new Date() - scrapedDate) / (1000 * 60 * 60 * 24);
+    
+    if (ageDays > maxAgeDays) {
+        return {
+            pass_fail: false,
+            score: 0,
+            compensation_extracted: "Hidden",
+            match_rationale: `HARD FAIL: Job posting age (${Math.round(ageDays)} days) exceeds the strict maximum threshold of ${maxAgeDays} days.`
+        };
+    }
+
     // Build the prompt for the LLM
     const prompt = `
 You are a ruthless technical recruiter API. Your ONLY job is to evaluate the following Job Description against my exact requirements and return a raw JSON object. Do not output markdown, explanations, or code blocks. ONLY JSON.
@@ -45,7 +65,6 @@ ${jobContent}
 
     try {
         // Run opencode in headless mode using the file content
-        // We use pure mode to make it fast and avoid plugin overhead
         console.log(`[Gatekeeper] Running LLM inference via opencode headless...`);
         const result = execSync(`opencode run --pure "$(cat ${tempPromptPath})"`, {
             encoding: 'utf8',
@@ -63,6 +82,8 @@ ${jobContent}
         }
 
         const evaluation = JSON.parse(jsonMatch[0]);
+        // Append the scraped date for sorting later
+        evaluation._date = scrapedDate;
         return evaluation;
 
     } catch (error) {
@@ -90,6 +111,7 @@ function run() {
 
     let passed = 0;
     let failed = 0;
+    let passedJobs = []; // Array to hold winners so we can sort them
 
     for (const file of files) {
         const filePath = path.join(STAGING_DIR, file);
@@ -104,19 +126,16 @@ function run() {
         console.log(`   -> Rationale: ${evaluation.match_rationale}`);
 
         if (evaluation.pass_fail && evaluation.score >= 70) {
-            // It's a winner! Move to Queue and prepend metadata
-            const queuePath = path.join(QUEUE_DIR, file);
+            // Read content before deleting
             const originalContent = fs.readFileSync(filePath, 'utf8');
-            
-            const metadataHeader = `---
-praxis_status: QUEUED
-praxis_score: ${evaluation.score}
-praxis_comp_extracted: ${evaluation.compensation_extracted}
-praxis_rationale: "${evaluation.match_rationale}"
----
-`;
-            fs.writeFileSync(queuePath, metadataHeader + originalContent);
             fs.unlinkSync(filePath); // Remove from staging
+            
+            passedJobs.push({
+                file: file,
+                evaluation: evaluation,
+                content: originalContent,
+                date: evaluation._date || new Date()
+            });
             passed++;
         } else {
             // Failed. Delete it.
@@ -125,9 +144,30 @@ praxis_rationale: "${evaluation.match_rationale}"
         }
     }
 
-    console.log(`\n[Gatekeeper] Finished. Passed: ${passed} | Failed/Trashed: ${failed}`);
+    console.log(`\n[Gatekeeper] Finished scoring. Sorting ${passedJobs.length} winners by newest first...`);
+    
+    // Sort jobs descending by date (newest first)
+    passedJobs.sort((a, b) => b.date - a.date);
+
+    // Write them to the queue
+    for (const job of passedJobs) {
+        // Since we are sorting, we can optionally prepend a sequential number to the filename 
+        // to enforce the queue order alphabetically in the filesystem
+        const queuePath = path.join(QUEUE_DIR, job.file);
+        
+        const metadataHeader = `---
+praxis_status: QUEUED
+praxis_score: ${job.evaluation.score}
+praxis_comp_extracted: ${job.evaluation.compensation_extracted}
+praxis_rationale: "${job.evaluation.match_rationale}"
+---
+`;
+        fs.writeFileSync(queuePath, metadataHeader + job.content);
+    }
+
+    console.log(`[Gatekeeper] Passed: ${passed} | Failed/Trashed: ${failed}`);
     if (passed > 0) {
-        console.log(`[Gatekeeper] High-scoring jobs are waiting for you in .praxis/queue/`);
+        console.log(`[Gatekeeper] ${passed} high-scoring jobs are waiting for you in .praxis/queue/, prioritized by newest first.`);
     }
 }
 

@@ -1,0 +1,109 @@
+{
+  "filters": {
+    "hard_requirements": {
+      "location": "Remote",
+      "max_posting_age_days": 7,
+      "exceptions_to_location": {
+        "required_compensation_multiplier": 2.5,
+        "notes": "Will only consider relocation (leaving Florida Keys) if compensation is life-changing (e.g., $500k+) or includes mortgage coverage/dual-residence retention."
+      },
+      "compensation": {
+        "w2_min_base_salary_usd": 240000,
+        "contract_min_hourly_rate_usd": 155,
+        "notes": "Contract/C2C rate includes a ~30-35% premium over W2 to cover self-employment taxes, healthcare, and PTO."
+      }
+    },
+    "dealbreakers": {
+      "tech_stack": [
+        ".NET",
+        "Legacy Java",
+        "Legacy PHP"
+      ],
+      "keywords": [
+        "On-site",
+        "Hybrid",
+        "Return to office"
+      ],
+      "title_keywords": [
+        "Program Manager",
+        "TPM",
+        "Product Manager",
+        "Designer",
+        "Commercial",
+        "Sales",
+        "Consulting",
+        "Medical"
+      ]
+    },
+    "target_roles": [
+      "Architect",
+      "Developer",
+      "Engineer",
+      "Lead",
+      "Principal",
+      "Researcher",
+      "Scientist",
+      "Staff"
+    ]
+  },
+  "scoring": {
+    "base_weight": {
+      "compensation": 0.6,
+      "domain_interest": 0.25,
+      "tech_stack": 0.15
+    },
+    "domain_multipliers": {
+      "Motorsport & Automotive": [
+        "F1",
+        "Formula 1",
+        "Automotive Restoration",
+        "4x4",
+        "Off-road"
+      ],
+      "Marine & Outdoors": [
+        "Boating",
+        "Marine",
+        "Fishing",
+        "Hunting",
+        "Outdoor Recreation"
+      ],
+      "Defense & Physical Engineering": [
+        "Ballistics",
+        "Firearms",
+        "Fabrication",
+        "Embedded Systems",
+        "Hardware integration",
+        "Robotics"
+      ],
+      "Core Expertise": [
+        "AI Development",
+        "Agentic Architectures",
+        "Event-Driven",
+        "Real-Time Systems"
+      ]
+    },
+    "tech_stack_multipliers": {
+      "highly_preferred": [
+        "Rust",
+        "Go",
+        "Python",
+        "TypeScript",
+        "Node"
+      ],
+      "interesting_niche": [
+        "Clojure",
+        "Lisp",
+        "Elixir",
+        "Haskell",
+        "Ocaml"
+      ]
+    },
+    "override_rules": {
+      "absolute_compensation_trump": {
+        "w2_threshold_usd": 500000,
+        "contract_threshold_hourly_usd": 300,
+        "action": "Bypass all dealbreakers (except location without relocation package) and domain multipliers; auto-flag as Tier 1 Priority."
+      }
+    }
+  }
+}
