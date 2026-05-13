@@ -1,0 +1,29 @@
+{
+  "personal_info": {
+    "first_name": "Kenton",
+    "last_name": "Smeltzer",
+    "email": "ksmeltzer@gmail.com",
+    "phone": "786-933-0944",
+    "linkedin": "http://www.linkedin.com/in/kentonsmeltzer",
+    "github": "https://github.com/ksmeltzer",
+    "portfolio": "https://cognilogical.com"
+  },
+  "compliance_and_eeoc": {
+    "authorized_to_work_in_us": "Yes",
+    "require_sponsorship": "No",
+    "gender": "Male",
+    "race": "White / Two or More Races",
+    "veteran_status": "I am not a protected veteran",
+    "disability_status": "No, I do not have a disability"
+  },
+  "application_defaults": {
+    "how_did_you_hear": "Company Website",
+    "street_address": "1388 Niles Rd.",
+    "city": "Summerland Key",
+    "state": "Florida",
+    "zip_code": "33042",
+    "country": "United States",
+    "notice_period": "2 weeks",
+    "desired_start_date": "2 weeks after offer acceptance"
+  }
+}
