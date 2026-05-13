@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
-const { isDuplicate } = require('./dedupe_helper');
+const { hasBeenSeenOrApplied, markAsSeen } = require('./dedupe_helper');
 
 const STAGING_DIR = path.join(__dirname, '../../.praxis/staging');
 const QUEUE_DIR = path.join(__dirname, '../../.praxis/queue');
@@ -31,12 +31,12 @@ function evaluateJob(filePath, fileName, params) {
     const company = companyMatch ? companyMatch[1].trim() : "";
     const title = titleMatch ? titleMatch[1].trim() : "";
 
-    if (isDuplicate(company, title)) {
+    if (hasBeenSeenOrApplied(company, title)) {
         return {
             pass_fail: false,
             score: 0,
             compensation_extracted: "Hidden",
-            match_rationale: `HARD FAIL: Duplicate - Already applied to this role at ${company}.`
+            match_rationale: `HARD FAIL: Duplicate - Already processed or applied to this role at ${company}.`
         };
     }
 
@@ -146,6 +146,11 @@ function run() {
             const originalContent = fs.readFileSync(filePath, 'utf8');
             fs.unlinkSync(filePath); // Remove from staging
             
+            // Mark as seen globally
+            const compMatch = originalContent.match(/company:\s*"?([^"\n]+)"?/);
+            const titMatch = originalContent.match(/title:\s*"?([^"\n]+)"?/);
+            if (compMatch && titMatch) markAsSeen(compMatch[1].trim(), titMatch[1].trim(), "PASSED");
+
             passedJobs.push({
                 file: file,
                 evaluation: evaluation,
@@ -155,7 +160,14 @@ function run() {
             passed++;
         } else {
             // Failed. Delete it.
+            const originalContent = fs.readFileSync(filePath, 'utf8');
             fs.unlinkSync(filePath);
+            
+            // Mark as seen globally
+            const compMatch = originalContent.match(/company:\s*"?([^"\n]+)"?/);
+            const titMatch = originalContent.match(/title:\s*"?([^"\n]+)"?/);
+            if (compMatch && titMatch) markAsSeen(compMatch[1].trim(), titMatch[1].trim(), "FAILED");
+            
             failed++;
         }
     }
