@@ -86,9 +86,11 @@
       "highly_preferred": [
         "Rust",
         "Go",
-        "Python",
         "TypeScript",
         "Node"
+      ],
+      "acceptable_but_no_bonus": [
+        "Python"
       ],
       "interesting_niche": [
         "Clojure",
