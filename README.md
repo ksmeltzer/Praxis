@@ -82,6 +82,7 @@ graph LR
 
 - **Node.js (v18+)**: Praxis uses a deterministic Node.js script (`evaluate_resume.js`) as an adversarial validation loop to strictly enforce ATS compliance and guarantee no facts are hallucinated or dropped during generation. You must have Node installed on your machine.
 - **An AI CLI Harness**: OpenCode, Claude Code, GitHub Copilot CLI, etc.
+- **Chrome DevTools MCP**: Required for automated job sourcing and ATS submission. If you don't have it installed, Praxis agents will detect this and provide instructions on how to install and configure it in your AI harness. For more details, see the [Model Context Protocol GitHub](https://github.com/modelcontextprotocol/servers/tree/main/src/puppeteer) or the respective Chrome DevTools MCP project page.
 
 ---
 

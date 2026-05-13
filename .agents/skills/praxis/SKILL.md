@@ -390,6 +390,9 @@ DIRECTIVE_VIOLATIONS: [list or "None"]
 
 **Execution Flow**:
 1. **Load Parameters**: Read `.praxis/data/search_parameters.json`.
+2. **Invoke Scrapers**: Call the `praxis-sourcer` agent. Instruct it to dynamically generate its search queries (Boolean strings and URL parameters) from the parameters file. Do NOT hardcode the search query for the agent.
+3. **MCP Check**: If the agent reports the Chrome DevTools MCP is missing, assist the user in installing it (provide the `mcp.json`/`opencode.json` configuration blocks) before proceeding.
+4. **Offline Scoring**: After jobs are downloaded to `.praxis/staging/`, execute `node scripts/sourcing/score_jobs.js` to run the Gatekeeper LLM evaluation.
 2. **API/Aggregation Poll**: Autonomously query available search APIs (e.g., Brave API for open ATS systems like Greenhouse/Lever, or designated third-party LinkedIn aggregators) using targeted boolean queries (e.g., `site:greenhouse.io ("Principal" OR "Staff") AND ("AI" OR "Rust")`).
 3. **LLM Evaluation Loop**: For each job description found:
    - Extract raw text, salary (if hidden), and location constraints.
